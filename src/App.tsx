@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { ArrowDownToLine, ArrowLeft, ArrowRight, Check, ChevronDown, X, Trash2, Code2, Copy, Image as ImageIcon, Link2, Monitor, Play, Plus, RotateCcw, SlidersHorizontal, Smartphone, Sparkles, Type, RectangleHorizontal } from 'lucide-react';
+import { ArrowDownToLine, ArrowLeft, ArrowRight, Check, ChevronDown, X, Trash2, Code2, Copy, Image as ImageIcon, Link2, Monitor, Play, Plus, RotateCcw, Smartphone, Sparkles, Type, RectangleHorizontal } from 'lucide-react';
 import { InlineArtifactsText, type InlineArtifactItem } from './lib/react';
 import type { MediaKind } from './lib/artifact-pill';
 import { Slider, Toggle, Folder } from 'dialkit';
 import { DialTransition } from './DialTransition';
 import { compileTransition } from './studio-motion';
 import { artifactProps, createPill, defaultText, randomPosition, samples, type Media, type PillConfig } from './studio-model';
+
+function ToolbarIcon({ name }: { name: 'add' | 'settings' }) {
+  // Native 18px coordinates keep both icons' 2px strokes on whole pixel edges.
+  return <svg width={18} height={18} viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d={name === 'add' ? 'M3 9h12M9 3v12' : 'M2 4h14M2 9h14M2 14h14M6 2v4M12 7v4M6 12v4'} />
+  </svg>;
+}
 
 function RangeControl({ label, value, onChange, min, max, step = .05, unit = 'em' }: { label: string; value: number; onChange: (n: number) => void; min: number; max: number; step?: number; unit?: string }) {
   return <Slider label={label} value={value} onChange={onChange} min={min} max={max} step={step} unit={unit} />;
@@ -256,8 +263,8 @@ export default function App() {
       </div>
     </main>
     <div className="canvas-toolbar" role="toolbar" aria-label="Canvas actions">
-      <button className="toolbar-button" aria-label="Add pill" title="Add pill" onClick={addPill}><Plus size={18} strokeWidth={2} /></button>
-      <button className="toolbar-button" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><SlidersHorizontal size={18} strokeWidth={2} /></button>
+      <button className="toolbar-button" aria-label="Add pill" title="Add pill" onClick={addPill}><ToolbarIcon name="add" /></button>
+      <button className="toolbar-button" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><ToolbarIcon name="settings" /></button>
     </div>
     <aside id="settings-sidebar" className={`controls-sidebar dialkit-root ${!inspector ? 'is-collapsed' : ''}`} data-theme={dark ? 'dark' : 'light'} aria-label={inspector === 'global' ? 'Global settings' : 'Pill settings'} aria-hidden={!inspector} inert={!inspector}>
       <header className="sidebar-header"><span>{inspector === 'global' ? 'Global settings' : selected?.name || 'Pill settings'}</span><button className="icon-button" aria-label="Close settings" title="Close settings" onClick={closeInspector}><X size={15} /></button></header>
