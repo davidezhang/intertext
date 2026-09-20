@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Artifact pill — plain HTML</title>
+  <script type="module" src="../dist/lib/artifact-pill.js"></script>
+  <style>
+    body { margin: 0; padding: 8vw 4vw; font-family: Helvetica, Arial, sans-serif; }
+    h1 { font-size: clamp(2.5rem, 7vw, 8rem); line-height: 1.15; letter-spacing: -.05em; font-weight: 400; }
+    button { padding: 12px 18px; border: 1px solid; background: white; color: black; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Designing <artifact-pill src="../public/media/alpine-lake.jpg" alt="An alpine lake" width="3.3em" height=".85em" fit="crop" duration="650ms" expanded-width="4.5em" expanded-height="1.2em"></artifact-pill> coherent systems.</h1>
+  <button type="button" aria-pressed="false">Toggle pill size</button>
+  <script>
+    const button = document.querySelector('button');
+    button.addEventListener('click', () => {
+      const expanded = document.querySelector('artifact-pill').toggleAttribute('expanded');
+      button.setAttribute('aria-pressed', String(expanded));
+    });
+  </script>
+</body>
+</html>
