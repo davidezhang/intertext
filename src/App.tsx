@@ -2,16 +2,13 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { ArrowDownToLine, ArrowLeft, ArrowRight, Check, ChevronDown, X, Trash2, Code2, Copy, Image as ImageIcon, Link2, Monitor, Play, Plus, RotateCcw, SlidersHorizontal, Smartphone, Sparkles, Type, RectangleHorizontal } from 'lucide-react';
 import { InlineArtifactsText, type InlineArtifactItem } from './lib/react';
 import type { MediaKind } from './lib/artifact-pill';
-import { artifactProps, createPill, defaultText, easingOptions, randomPosition, samples, type Media, type PillConfig } from './studio-model';
+import { Slider, Toggle, Folder } from 'dialkit';
+import { DialTransition } from './DialTransition';
+import { compileTransition } from './studio-motion';
+import { artifactProps, createPill, defaultText, randomPosition, samples, type Media, type PillConfig } from './studio-model';
 
 function RangeControl({ label, value, onChange, min, max, step = .05, unit = 'em' }: { label: string; value: number; onChange: (n: number) => void; min: number; max: number; step?: number; unit?: string }) {
-  return <label className="range-control"><span className="control-label">{label}<span className="number-value">{Number(value.toFixed(2))}<small>{unit}</small></span></span>
-    <input type="range" aria-label={label} aria-valuetext={`${Number(value.toFixed(2))} ${unit}`} min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} style={{ '--progress': `${(value - min) / (max - min) * 100}%` } as CSSProperties} />
-  </label>;
-}
-
-function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
-  return <button className="toggle-row" role="switch" aria-checked={checked} onClick={() => onChange(!checked)}><span>{label}</span><span className="switch-track"><span /></span></button>;
+  return <Slider label={label} value={value} onChange={onChange} min={min} max={max} step={step} unit={unit} />;
 }
 
 function CodePanel({ artifacts, text, hasUpload }: { artifacts: InlineArtifactItem[]; text: string; hasUpload: boolean }) {
@@ -70,7 +67,7 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
   pill: PillConfig; onChange: (patch: Partial<PillConfig>) => void; onUpload: () => void;
   onAnimate: () => void; reducedMotion: boolean; wordCount: number;
 }) {
-  const { media, width, height, radius, fit, focalX, focalY, duration, easing, hover, loop, paused } = pill;
+  const { media, width, height, radius, fit, focalX, focalY, hover, loop, paused } = pill;
   const [panel, setPanel] = useState<Panel>('shape');
   const [urlOpen, setUrlOpen] = useState(false);
   const [url, setUrl] = useState('');
@@ -83,8 +80,6 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
   const setFit = (fit: PillConfig['fit']) => onChange({ fit });
   const setFocalX = (focalX: number) => onChange({ focalX });
   const setFocalY = (focalY: number) => onChange({ focalY });
-  const setDuration = (duration: number) => onChange({ duration });
-  const setEasing = (easing: PillConfig['easing']) => onChange({ easing });
   const setHover = (hover: boolean) => onChange({ hover });
   const setPaused = (paused: boolean) => onChange({ paused });
   const animate = onAnimate;
@@ -112,21 +107,29 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
         <ControlSection name="shape" title="Shape" icon={<RectangleHorizontal size={15} />} open={panel === 'shape'} onToggle={() => togglePanel('shape')}>
 
             <div className="preset-row">{[{ label: 'Compact', w: 1.4, h: .8 }, { label: 'Classic', w: 3.3, h: .85 }, { label: 'Wide', w: 4.5, h: .85 }].map(p => <button key={p.label} aria-pressed={width === p.w && height === p.h} onClick={() => { onChange({ width: p.w, height: p.h }); }}>{p.label}</button>)}</div>
-            <RangeControl label="Width" value={width} min={.5} max={6} onChange={setWidth} />
-            <RangeControl label="Height" value={height} min={.35} max={2.5} onChange={setHeight} />
-            <RangeControl label="Radius" value={radius} min={0} max={200} step={1} unit="px" onChange={setRadius} />
+            <div className="dial-stack shape-dials">
+              <RangeControl label="Width" value={width} min={.5} max={6} onChange={setWidth} />
+              <RangeControl label="Height" value={height} min={.35} max={2.5} onChange={setHeight} />
+              <RangeControl label="Radius" value={radius} min={0} max={200} step={1} unit="px" onChange={setRadius} />
+            </div>
             <div className="panel-rule" />
             <span className="field-heading">Media fit</span><div className="segmented fit-controls" role="group" aria-label="Media fit">{(['crop', 'fit', 'fill'] as const).map(option => <button key={option} aria-pressed={fit === option} onClick={() => setFit(option)}>{option[0].toUpperCase() + option.slice(1)}</button>)}</div>
             <p className="control-hint">{fit === 'crop' ? 'Fill the shape. Crop the edges.' : fit === 'fit' ? 'Keep the entire image in view.' : 'Stretch the media to fill the shape.'}</p>
-            <details className="focal-controls"><summary>Focal point <Plus size={13} /></summary><RangeControl label="Horizontal" value={focalX} min={0} max={100} step={1} unit="%" onChange={setFocalX} /><RangeControl label="Vertical" value={focalY} min={0} max={100} step={1} unit="%" onChange={setFocalY} /></details>
+            <div className="focal-controls"><Folder title="Focal point" defaultOpen={false}><div className="dial-stack"><RangeControl label="Horizontal" value={focalX} min={0} max={100} step={1} unit="%" onChange={setFocalX} /><RangeControl label="Vertical" value={focalY} min={0} max={100} step={1} unit="%" onChange={setFocalY} /></div></Folder></div>
         </ControlSection>
         <ControlSection name="motion" title="Motion" icon={<Sparkles size={15} />} open={panel === 'motion'} onToggle={() => togglePanel('motion')}>
 
-            <RangeControl label="Duration" value={duration} min={100} max={2000} step={50} unit="ms" onChange={setDuration} />
-            <label className="select-row"><span>Easing</span><select aria-label="Animation easing" value={easing} onChange={e => setEasing(e.target.value as keyof typeof easingOptions)}>{Object.keys(easingOptions).map(key => <option key={key}>{key}</option>)}</select></label>
+            <span className="field-heading">Animation target</span>
+            <div className="dial-stack">
+              <RangeControl label="Target width" value={pill.expandedWidth} min={.5} max={7} onChange={expandedWidth => onChange({ expandedWidth })} />
+              <RangeControl label="Target height" value={pill.expandedHeight} min={.35} max={3.5} onChange={expandedHeight => onChange({ expandedHeight })} />
+            </div>
+            <p className="control-hint">Set each dimension independently.</p>
             <div className="panel-rule" />
-            <Toggle label="Expand on hover" checked={hover} onChange={setHover} />
-            <Toggle label="Loop animation" checked={loop} onChange={value => onChange({ loop: value, expanded: false })} />
+            <DialTransition value={pill.transition} onChange={transition => onChange({ transition, ...compileTransition(transition) })} />
+            <div className="panel-rule" />
+            <div className="dial-stack"><Toggle label="Animate on hover" checked={hover} onChange={setHover} />
+            <Toggle label="Loop animation" checked={loop} onChange={value => onChange({ loop: value, expanded: false })} /></div>
             <button className="primary-button full-width" onClick={animate} disabled={reducedMotion || loop}><Play size={13} fill="currentColor" /> Play animation <span>↗</span></button>
             <p className="control-hint">{reducedMotion ? 'Reduced motion is enabled on your device.' : 'Changes width and height with text reflow.'}</p>
         </ControlSection>
@@ -251,13 +254,13 @@ export default function App() {
       <button className="toolbar-button" aria-label="Add pill" title="Add pill" onClick={addPill}><Plus size={18} /></button>
       <button className="toolbar-button" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><SlidersHorizontal size={17} /></button>
     </div>
-    <aside id="settings-sidebar" className={`controls-sidebar ${!inspector ? 'is-collapsed' : ''}`} aria-label={inspector === 'global' ? 'Global settings' : 'Pill settings'} aria-hidden={!inspector} inert={!inspector}>
+    <aside id="settings-sidebar" className={`controls-sidebar dialkit-root ${!inspector ? 'is-collapsed' : ''}`} data-theme={dark ? 'dark' : 'light'} aria-label={inspector === 'global' ? 'Global settings' : 'Pill settings'} aria-hidden={!inspector} inert={!inspector}>
       <header className="sidebar-header"><span>{inspector === 'global' ? 'Global settings' : selected?.name || 'Pill settings'}</span><button className="icon-button" aria-label="Close settings" title="Close settings" onClick={closeInspector}><X size={15} /></button></header>
       <div className="sidebar-sections">
         {inspector === 'global' ? <>
           <ControlSection name="text" title="Typography" icon={<Type size={15} />} open={globalPanel === 'text'} onToggle={() => toggleGlobal('text')}>
             <p className="control-hint">Click the text on the canvas to edit it.</p>
-            <RangeControl label="Type scale" value={fontSize} min={50} max={160} step={1} unit="%" onChange={setFontSize} />
+            <div className="shape-dials"><RangeControl label="Type scale" value={fontSize} min={50} max={160} step={1} unit="%" onChange={setFontSize} /></div>
           </ControlSection>
           <ControlSection name="canvas" title="Canvas" icon={<Monitor size={15} />} open={globalPanel === 'canvas'} onToggle={() => toggleGlobal('canvas')}>
             <span className="field-heading">Background</span>

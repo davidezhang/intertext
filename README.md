@@ -21,6 +21,8 @@ The icon-only sliders button opens **global settings**: Typography, Canvas, and 
 
 The **+** button adds a pill at a random word boundary, preferring an unoccupied location. It brings the new pill into view and focuses it so it is ready to drag or move with the arrow keys. Dragging keeps settings closed. Remove a pill from its settings footer. Canvas contains dark/light backgrounds and fluid/375-pixel preview settings; Export includes every pill in the composition. Reset global settings restores the default text, type scale, dark mode, and fluid canvas without resetting individual pill designs.
 
+Shape and Motion use [DialKit](https://joshpuckett.me/dialkit) controls embedded in the sidebar. Drag a slider to adjust it, use the arrow keys for fine changes, or focus it and press Enter to type a precise value. Width and height use `em` (relative to the surrounding text); radius uses pixels. Motion has independent target dimensions and an interactive Bézier editor. **Easing** uses duration and a curve; **Time** uses visual duration and bounce; **Physics** uses stiffness, damping, and mass. Play, hover, and loop use the selected transition. Springs include their settling tail, so their total playback time can exceed the visual duration.
+
 Upload media stays in your browser using an object URL. URL media is fetched directly from the URL you enter. Settings and uploaded files are session-only; export a snippet to retain the configuration. Add the original media file to your own project when using that snippet.
 
 ## Any website: native HTML
@@ -169,7 +171,7 @@ While dragging, the pill follows the exact point you grabbed and the words reflo
 | `fit` | `fit` | `crop` → `cover`; `fit` → `contain`; `fill` → stretched |
 | `position` | `position` | CSS object-position, e.g. `60% 30%` |
 | `duration` | `duration` | CSS duration, e.g. `650ms` |
-| `easing` | `easing` | CSS timing function or cubic-bezier |
+| `easing` | `easing` | CSS timing function, `cubic-bezier()`, or `linear()` spring curve |
 | `expanded` | `expanded` | Use the expanded size |
 | `hover-expand` | `hoverExpand` | Expand on hover or visible keyboard focus |
 | `expanded-width` | `expandedWidth` | Expanded width; default `4.2em` |
@@ -202,7 +204,9 @@ pill.toggleAttribute('expanded');
 
 ## Implementation and verification
 
-The component uses the browser's native inline layout, Shadow DOM, CSS object-fit, CSS transitions, and pointer events. Pretext was considered, but custom text measurement is unnecessary for this flow. The studio's controls are direct React controls, so DialKit and Motion are not shipped as dependencies.
+The component uses the browser's native inline layout, Shadow DOM, CSS object-fit, CSS transitions, and pointer events. Pretext was considered, but custom text measurement is unnecessary for this flow. The studio embeds DialKit's exported sliders, toggles, folders, and transition editor in its custom sidebar. Pill values remain in React state; a scoped DialKit store registration keeps the transition editor mode in sync and is removed on unmount. Media tools, inline editing, placement, and component export remain custom.
+
+DialKit and Motion are development dependencies used by the studio build only. Motion compiles springs into CSS `linear()` timing functions, which are also included in exported snippets; the reusable `dist/lib` entries import neither library. Spring snippets require a browser with CSS `linear()` support. The library's existing drag springs are independent of the studio's size-animation editor.
 
 `pnpm test` verifies package imports without DOM globals, SSR attributes, false boolean handling, placement boundaries, safe text escaping/Unicode, movement accessibility markup, and the React client directive. DOM interaction tests use a deterministic wrapping layout to verify reflow before release, media identity, grab offset, pointer capture, reversal, single commit, cancellation, keyboard movement, and reduced motion. Multi-pill checks cover independent dragging, click versus drag selection, editing/removal, shared boundaries, and random insertion. Inline editing checks cover caret continuity, pill placement, selection replacement, undo/redo, empty text, plain-text paste, line breaks, and IME composition. Browser verification covers pointer dragging across wrapped lines, media rendering, responsive layouts, full-screen geometry, in-place editing, and global/per-pill controls. Browser-specific autoplay and codecs remain subject to the host browser.
 

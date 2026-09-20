@@ -105,7 +105,7 @@ select{border:1px solid var(--line);border-radius:4px;background:var(--panel);co
 .studio.theme-dark{--material:rgba(25,25,27,.88);--hairline:rgba(255,255,255,.09);--muted:#aaa}
 .specimen{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}
 .specimen[data-artifact-dragging] [data-artifact-word]{pointer-events:none}
-.controls-sidebar{background:var(--material);backdrop-filter:blur(24px) saturate(120%);-webkit-backdrop-filter:blur(24px) saturate(120%);border-color:var(--hairline);border-radius:12px;box-shadow:0 20px 60px #0003,0 4px 12px #0002,inset 0 1px 0 var(--hairline);transform-origin:top right;transition:transform 220ms cubic-bezier(.22,1,.36,1),opacity 160ms ease,visibility 220ms;will-change:auto}
+.controls-sidebar{background:var(--material);backdrop-filter:blur(24px) saturate(120%);-webkit-backdrop-filter:blur(24px) saturate(120%);border-color:var(--hairline);border-radius:12px;box-shadow:0 20px 60px #0003,0 4px 12px #0002;transform-origin:top right;transition:transform 220ms cubic-bezier(.22,1,.36,1),opacity 160ms ease,visibility 220ms;will-change:auto}
 .controls-sidebar.is-collapsed{transform:translateX(10px) scale(.975);opacity:0;visibility:hidden;pointer-events:none}
 .sidebar-header{min-height:52px;font-size:13px;letter-spacing:-.01em;font-weight:550;border-bottom-color:var(--hairline)}
 .sidebar-sections{scroll-padding:8px}
@@ -168,3 +168,19 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 .specimen[contenteditable=true]{cursor:text;caret-color:var(--fg);outline:none;min-height:1.2em}
 .specimen[data-artifact-empty]::after{content:'Type something…';color:var(--muted);pointer-events:none}
 .specimen[contenteditable=true]::selection,.specimen[contenteditable=true] ::selection{background:var(--fg);color:var(--bg)}
+
+/* DialKit controls share the existing sidebar, theme, and scrolling surface. */
+.controls-sidebar.dialkit-root{--dial-radius:6px;--dial-row-height:36px;--dial-row-gap:6px;--dial-text-label:var(--fg);--dial-text-section:var(--muted);--dial-text-focus:var(--fg);--dial-focus-ring:var(--fg);--dial-border:var(--hairline);font-family:inherit}
+.dial-stack{display:flex;flex-direction:column;gap:6px}
+.shape-dials{margin-top:16px}
+.controls-sidebar .dialkit-folder:not(.dialkit-folder-root){border:0;margin:0}
+.controls-sidebar .dialkit-folder-title{font-size:12px;font-weight:500}
+.controls-sidebar .dialkit-folder-inner{padding-bottom:0}
+.controls-sidebar .dialkit-slider-label,.controls-sidebar .dialkit-slider-value,.controls-sidebar .dialkit-slider-input,.controls-sidebar .dialkit-toggle-label{font-size:12px}
+.controls-sidebar .dialkit-slider-value,.controls-sidebar .dialkit-slider-input{font-family:'SFMono-Regular',Consolas,monospace;font-variant-numeric:tabular-nums}
+.controls-sidebar :is([role=slider],[role=button],[role=switch]):focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.controls-sidebar .focal-controls{padding-top:8px}
+.controls-sidebar #motion-controls .panel-rule{margin:14px 0 6px}
+.controls-sidebar .dialkit-toggle{width:100%}
+@media(pointer:coarse){.controls-sidebar.dialkit-root{--dial-row-height:44px}}
+@media(prefers-contrast:more){.controls-sidebar.dialkit-root{--dial-text-label:var(--fg);--dial-text-section:var(--fg);--dial-border:var(--fg);--dial-border-hover:var(--fg)}}
