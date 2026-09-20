@@ -8,8 +8,8 @@ import { compileTransition } from './studio-motion';
 import { artifactProps, createPill, defaultText, randomPosition, samples, type Media, type PillConfig } from './studio-model';
 
 function ToolbarIcon({ name }: { name: 'add' | 'settings' }) {
-  // Native 18px coordinates keep both icons' 2px strokes on whole pixel edges.
-  return <svg width={18} height={18} viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+  // Native 18px coordinates give both icons matching stroke width and edge alignment.
+  return <svg width={18} height={18} viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
     <path d={name === 'add' ? 'M3 9h12M9 3v12' : 'M2 4h14M2 9h14M2 14h14M6 2v4M12 7v4M6 12v4'} />
   </svg>;
 }
