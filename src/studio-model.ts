@@ -3,11 +3,16 @@ import type { ArtifactPillProps } from './lib/react';
 import type { MediaFit, MediaKind } from './lib/artifact-pill';
 import type { TransitionConfig } from 'dialkit';
 
-export type Media = { id: string; name: string; kind: MediaKind; src: string; poster?: string; alt: string };
+export type Media = { id: string; name: string; kind: MediaKind; src: string; poster?: string; alt: string; credit?: { name: string; url: string } };
 export const samples: Media[] = [
-  { id: 'alpine', name: 'Alpine still', kind: 'image', src: '/media/alpine-lake.jpg', alt: 'An alpine lake surrounded by forest and mountains' },
-  { id: 'petals', name: 'In bloom', kind: 'gif', src: '/media/flowers.gif', poster: '/media/flowers.jpg', alt: 'Pink flowers gently moving in the breeze' },
-  { id: 'motion', name: 'A moving moment', kind: 'video', src: '/media/flowers.mp4', poster: '/media/flowers.jpg', alt: 'A close-up video of flowers in a garden' },
+  { id: 'concrete', name: 'Concrete study', kind: 'image', src: '/media/concrete.jpg', alt: 'Angular concrete beams and recessed windows in monochrome',
+    credit: { name: 'Marc Cordeau', url: 'https://unsplash.com/photos/Z3MsCdxNJg4' } },
+  { id: 'analog', name: 'Analog loop', kind: 'gif', src: '/media/analog-loop.gif', poster: '/media/analog-loop.jpg', alt: 'A monochrome close-up of a spinning vinyl record and tonearm',
+    credit: { name: 'emirkhan bal', url: 'https://www.pexels.com/video/spinning-vinyl-record-7202466/' } },
+  { id: 'architecture', name: 'Concrete in motion', kind: 'video', src: '/media/concrete-motion.mp4', poster: '/media/concrete-motion.jpg', alt: 'Clouds passing a curved concrete building in black and white',
+    credit: { name: 'Nuray', url: 'https://www.pexels.com/video/elegant-brutalist-architecture-against-blue-sky-28883887/' } },
+  { id: 'chair', name: 'Shell chair', kind: 'image', src: '/media/shell-chair.jpg', alt: 'A black shell chair casting a soft shadow on a pale gray floor',
+    credit: { name: 'Resource Database', url: 'https://unsplash.com/photos/rZ1RPEom9gs' } },
 ];
 export const defaultText = 'Designing coherent systems for new computing interfaces.';
 export type PillConfig = {

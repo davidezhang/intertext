@@ -102,7 +102,7 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
             <label className="alt-field">Media description<input aria-label="Media description" value={media.alt} onChange={e => setMedia({ ...media, alt: e.target.value })} /></label>
             {media.kind === 'video' && <Toggle label="Play video" checked={!paused} onChange={v => setPaused(!v)} />}
             {error && <p className="error-text" role="alert">{error}</p>}
-            <div className="media-credit"><a href="https://unsplash.com/photos/Eo59O2GdipY" target="_blank" rel="noreferrer">Photo: Joaquim ↗</a></div>
+            {media.credit && <div className="media-credit"><a href={media.credit.url} target="_blank" rel="noreferrer">{media.credit.name} ↗</a></div>}
         </ControlSection>
         <ControlSection name="shape" title="Shape" icon={<RectangleHorizontal size={15} />} open={panel === 'shape'} onToggle={() => togglePanel('shape')}>
 
@@ -119,7 +119,12 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
         </ControlSection>
         <ControlSection name="motion" title="Motion" icon={<Sparkles size={15} />} open={panel === 'motion'} onToggle={() => togglePanel('motion')}>
 
-            <span className="field-heading">Animation target</span>
+            <span className="field-heading">Starting size</span>
+            <div className="dial-stack">
+              <RangeControl label="Current width" value={width} min={.5} max={6} onChange={setWidth} />
+              <RangeControl label="Current height" value={height} min={.35} max={2.5} onChange={setHeight} />
+            </div>
+            <span className="field-heading spaced-field">Target size</span>
             <div className="dial-stack">
               <RangeControl label="Target width" value={pill.expandedWidth} min={.5} max={7} onChange={expandedWidth => onChange({ expandedWidth })} />
               <RangeControl label="Target height" value={pill.expandedHeight} min={.35} max={3.5} onChange={expandedHeight => onChange({ expandedHeight })} />
@@ -251,8 +256,8 @@ export default function App() {
       </div>
     </main>
     <div className="canvas-toolbar" role="toolbar" aria-label="Canvas actions">
-      <button className="toolbar-button" aria-label="Add pill" title="Add pill" onClick={addPill}><Plus size={18} /></button>
-      <button className="toolbar-button" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><SlidersHorizontal size={17} /></button>
+      <button className="toolbar-button" aria-label="Add pill" title="Add pill" onClick={addPill}><Plus size={18} strokeWidth={2} /></button>
+      <button className="toolbar-button" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><SlidersHorizontal size={18} strokeWidth={2} /></button>
     </div>
     <aside id="settings-sidebar" className={`controls-sidebar dialkit-root ${!inspector ? 'is-collapsed' : ''}`} data-theme={dark ? 'dark' : 'light'} aria-label={inspector === 'global' ? 'Global settings' : 'Pill settings'} aria-hidden={!inspector} inert={!inspector}>
       <header className="sidebar-header"><span>{inspector === 'global' ? 'Global settings' : selected?.name || 'Pill settings'}</span><button className="icon-button" aria-label="Close settings" title="Close settings" onClick={closeInspector}><X size={15} /></button></header>

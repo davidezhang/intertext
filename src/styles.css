@@ -66,7 +66,7 @@ select{border:1px solid var(--line);border-radius:4px;background:var(--panel);co
 .section-body textarea{display:block;width:100%;height:100px;resize:vertical;min-height:65px;border:1px solid var(--line);background:var(--soft);color:var(--fg);padding:11px;font-size:14px;line-height:1.4;border-radius:4px}
 .position-control{display:flex;justify-content:space-between;align-items:center;font-size:11px;gap:10px}
 .position-control>div{display:flex;align-items:center;gap:7px;font:10px/1 monospace}
-.media-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:5px}
+.media-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 8px;margin-top:5px}
 .media-card{padding:0;text-align:left;min-width:0}
 .media-thumbnail{height:65px;position:relative;overflow:hidden;background:var(--soft);border:1px solid transparent;border-radius:3px}
 .media-thumbnail img{width:100%;height:100%;object-fit:cover}
@@ -146,14 +146,14 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 .creator-credit a{display:inline-block;padding:2px 0;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:color 140ms ease,text-decoration-color 140ms ease}
 .creator-credit a:hover,.creator-credit a:focus-visible{color:var(--fg);text-decoration-color:currentColor}
 @media(pointer:coarse){.section-toggle,.toggle-row{min-height:44px}.icon-button{min-width:36px;min-height:36px}.preset-row button,.segmented button,.primary-button,.media-actions .text-button{min-height:40px}input[type=range]{height:36px}.sidebar-header{min-height:56px}}
-@media(prefers-reduced-transparency:reduce){.controls-sidebar,.toolbar-button{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none}}
-@media(prefers-contrast:more){.controls-sidebar,.toolbar-button{background:var(--panel);border-color:var(--fg);backdrop-filter:none}.studio{--muted:var(--fg);--line:var(--fg)}}
+@media(prefers-reduced-transparency:reduce){.controls-sidebar{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none}}
+@media(prefers-contrast:more){.controls-sidebar{background:var(--panel);border-color:var(--fg);backdrop-filter:none}.studio{--muted:var(--fg);--line:var(--fg)}}
 @media(prefers-reduced-motion:reduce){.controls-sidebar,.toolbar-button,.section-reveal{transition:opacity 100ms ease,visibility 100ms;transform:none}.section-chevron,.switch-track>span{transition:none}.studio{transition:none}.icon-button:active,.primary-button:active,.preset-row button:active,.segmented button:active,.media-card:active{transform:none}}
 
 .canvas-toolbar{position:fixed;top:16px;right:16px;z-index:40;display:flex;gap:8px}
-.toolbar-button{display:grid;place-items:center;width:40px;height:40px;padding:0;background:var(--material);color:var(--fg);border:1px solid var(--hairline);border-radius:10px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 2px 8px #0001;transition:background 140ms ease,transform 120ms ease}
-.toolbar-button:hover{background:var(--soft)}
-.toolbar-button:active{transform:scale(.96)}
+.toolbar-button{display:grid;place-items:center;width:40px;height:40px;padding:0;background:transparent;color:var(--fg);border:0;border-radius:10px;transition:background 140ms ease,transform 120ms ease}
+@media(hover:hover){.toolbar-button:hover{background:var(--soft)}}
+.toolbar-button:active{background:var(--soft);transform:scale(.96)}
 .toolbar-button[aria-expanded=true]{color:var(--bg);background:var(--fg)}
 .pill-placement{padding:10px 17px;border-bottom:1px solid var(--hairline)}
 .specimen artifact-pill[data-artifact-selected]{outline:1px solid var(--fg);outline-offset:5px}
@@ -161,8 +161,6 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 .sidebar-error{margin:12px 17px}
 @media(max-width:700px){.canvas-toolbar{top:12px;right:12px}.controls-sidebar{top:64px;max-height:calc(100dvh - 112px - env(safe-area-inset-bottom))}}
 @media(pointer:coarse){.toolbar-button{width:44px;height:44px}.controls-sidebar{top:72px;max-height:calc(100dvh - 120px - env(safe-area-inset-bottom))}}
-@media(prefers-reduced-transparency:reduce){.toolbar-button{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none}}
-@media(prefers-contrast:more){.toolbar-button{background:var(--panel);border-color:var(--fg);backdrop-filter:none}}
 @media(prefers-reduced-motion:reduce){.toolbar-button:active{transform:none}}
 
 .specimen[contenteditable=true]{cursor:text;caret-color:var(--fg);outline:none;min-height:1.2em}

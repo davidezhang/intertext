@@ -21,7 +21,7 @@ The icon-only sliders button opens **global settings**: Typography, Canvas, and 
 
 The **+** button adds a pill at a random word boundary, preferring an unoccupied location. It brings the new pill into view and focuses it so it is ready to drag or move with the arrow keys. Dragging keeps settings closed. Remove a pill from its settings footer. Canvas contains dark/light backgrounds and fluid/375-pixel preview settings; Export includes every pill in the composition. Reset global settings restores the default text, type scale, dark mode, and fluid canvas without resetting individual pill designs.
 
-Shape and Motion use [DialKit](https://joshpuckett.me/dialkit) controls embedded in the sidebar. Drag a slider to adjust it, use the arrow keys for fine changes, or focus it and press Enter to type a precise value. Width and height use `em` (relative to the surrounding text); radius uses pixels. Motion has independent target dimensions and an interactive Bézier editor. **Easing** uses duration and a curve; **Time** uses visual duration and bounce; **Physics** uses stiffness, damping, and mass. Play, hover, and loop use the selected transition. Springs include their settling tail, so their total playback time can exceed the visual duration.
+Shape and Motion use [DialKit](https://joshpuckett.me/dialkit) controls embedded in the sidebar. Drag a slider to adjust it, use the arrow keys for fine changes, or focus it and press Enter to type a precise value. Width and height use `em` (relative to the surrounding text); radius uses pixels. Motion shows both starting and target dimensions, with current width and height synchronized with Shape, plus an interactive Bézier editor. **Easing** uses duration and a curve; **Time** uses visual duration and bounce; **Physics** uses stiffness, damping, and mass. Play, hover, and loop use the selected transition. Springs include their settling tail, so their total playback time can exceed the visual duration.
 
 Upload media stays in your browser using an object URL. URL media is fetched directly from the URL you enter. Settings and uploaded files are session-only; export a snippet to retain the configuration. Add the original media file to your own project when using that snippet.
 
@@ -36,7 +36,7 @@ Copy `dist/lib/artifact-pill.js` into your project. It has no React, animation, 
   Designing
   <artifact-pill
     src="/media/image.jpg"
-    alt="A forest around an alpine lake"
+    alt="Angular concrete beams and recessed windows"
     width="3.3em"
     height="0.85em"
     radius="999px"
@@ -76,7 +76,7 @@ export function Heading() {
       <ArtifactPill
         src="/media/clip.mp4"
         kind="video"
-        alt="A close-up of flowers moving in the breeze"
+        alt="Clouds passing a curved concrete building"
         poster="/media/poster.jpg"
         width="3.3em"
         height="0.85em"
@@ -105,7 +105,7 @@ export function EditableHeading() {
       style={{ fontSize: 'clamp(2rem, 7vw, 8rem)', lineHeight: 1.2 }}
       artifact={{
         src: '/media/photo.jpg',
-        alt: 'An alpine lake surrounded by forest',
+        alt: 'Angular concrete beams and recessed windows',
         width: '3.3em',
         height: '.85em',
         fit: 'crop',
@@ -127,8 +127,8 @@ import { InlineArtifactsText, type InlineArtifactItem } from '@design-components
 
 export function Composition() {
   const [artifacts, setArtifacts] = useState<InlineArtifactItem[]>([
-    { id: 'lake', position: 1, artifact: { src: '/lake.jpg', alt: 'An alpine lake', width: '3.3em' } },
-    { id: 'flowers', position: 4, artifact: { src: '/flowers.mp4', kind: 'video', alt: 'Flowers in the breeze', width: '2em' } },
+    { id: 'concrete', position: 1, artifact: { src: '/concrete.jpg', alt: 'Angular concrete beams', width: '3.3em' } },
+    { id: 'architecture', position: 4, artifact: { src: '/concrete-motion.mp4', kind: 'video', alt: 'Clouds passing a curved concrete building', width: '2em' } },
   ]);
   return <InlineArtifactsText
     text="Designing coherent systems for new computing interfaces."
@@ -214,7 +214,9 @@ The studio's interaction and material refinements follow the [Apple design skill
 
 ## Demo asset credits
 
-- Alpine lake photograph by Joaquim: https://unsplash.com/photos/Eo59O2GdipY
-- Flower video: https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4 (MDN CC0 example). The GIF and poster are derived from this video.
+- **Concrete study** — [Marc Cordeau on Unsplash](https://unsplash.com/photos/Z3MsCdxNJg4), under the [Unsplash License](https://unsplash.com/license). Resized photograph of angular concrete architecture.
+- **Analog loop** — [emirkhan bal on Pexels](https://www.pexels.com/video/spinning-vinyl-record-7202466/), under the [Pexels License](https://www.pexels.com/license/). A four-second monochrome GIF excerpt of a spinning turntable, with a still poster.
+- **Concrete in motion** — [Nuray on Pexels](https://www.pexels.com/video/elegant-brutalist-architecture-against-blue-sky-28883887/), under the [Pexels License](https://www.pexels.com/license/). An eight-second monochrome, silent architectural video excerpt, with a still poster.
+- **Shell chair** — [Resource Database on Unsplash](https://unsplash.com/photos/rZ1RPEom9gs), under the [Unsplash License](https://unsplash.com/license). A resized monochrome chair render from the creator's “Musical Chairs” series.
 
 The demo media is in `public/media` and is not included in the reusable library package.
