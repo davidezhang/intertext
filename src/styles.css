@@ -164,3 +164,7 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 @media(prefers-reduced-transparency:reduce){.toolbar-button{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none}}
 @media(prefers-contrast:more){.toolbar-button{background:var(--panel);border-color:var(--fg);backdrop-filter:none}}
 @media(prefers-reduced-motion:reduce){.toolbar-button:active{transform:none}}
+
+.specimen[contenteditable=true]{cursor:text;caret-color:var(--fg);outline:none;min-height:1.2em}
+.specimen[data-artifact-empty]::after{content:'Type something…';color:var(--muted);pointer-events:none}
+.specimen[contenteditable=true]::selection,.specimen[contenteditable=true] ::selection{background:var(--fg);color:var(--bg)}

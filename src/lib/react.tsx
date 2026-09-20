@@ -3,6 +3,7 @@ import { createElement, forwardRef, useEffect, useId, useLayoutEffect, useRef, u
 import { flushSync } from 'react-dom';
 import { containsPoint, findInsertion, isSettled, stepSpring, type Axis, type Box, type Point } from './drag-layout.js';
 import './artifact-pill.js';
+import { useInlineEditing, type TextChange } from './use-inline-editing.js';
 import type { ArtifactPillElement, MediaFit, MediaKind } from './artifact-pill.js';
 
 export interface ArtifactPillProps extends HTMLAttributes<ArtifactPillElement> {
@@ -53,6 +54,8 @@ export interface InlineArtifactsTextProps extends Omit<HTMLAttributes<HTMLDivEle
   text: string;
   artifacts: InlineArtifactItem[];
   onPositionChange: (id: string, position: number) => void;
+  /** Enables direct plain-text editing while preserving the inline pills. */
+  onTextChange?: TextChange;
   onSelectArtifact?: (id: string) => void;
   onArtifactDragStart?: (id: string) => void;
   selectedId?: string | null;
@@ -74,7 +77,7 @@ export function InlineArtifactText({ position, onPositionChange, artifact, ...pr
   return <InlineArtifactsText {...props} artifacts={[{ id: 'artifact', position, artifact }]} onPositionChange={(_, next) => onPositionChange(next)} />;
 }
 
-export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelectArtifact, onArtifactDragStart, selectedId, movable = true, ...props }: InlineArtifactsTextProps) {
+export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelectArtifact, onArtifactDragStart, onTextChange, selectedId, movable = true, ...props }: InlineArtifactsTextProps) {
   const root = useRef<HTMLDivElement>(null);
   const pill = useRef<ArtifactPillElement | null>(null);
   const pillNodes = useRef(new Map<string, ArtifactPillElement>());
@@ -91,6 +94,9 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
   const reducedMotion = useRef(false);
   const cancelRef = useRef<() => void>(() => {});
   const instructionsId = useId();
+  const editable = Boolean(onTextChange);
+  const editor = useInlineEditing(root, text, Object.fromEntries(artifacts.map(item => [item.id, item.position])), onTextChange);
+  const renderedChildren = useRef<ReactNode[]>([]);
   const tokens = text.match(/\S+\s*/gu) || [];
   const leadingSpace = text.match(/^\s+/u)?.[0] || '';
   const clamp = (position: number) => Math.max(0, Math.min(tokens.length, Math.round(position)));
@@ -315,10 +321,11 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
       aria-label={artifact['aria-label'] || (interactive ? `${onSelectArtifact ? 'Edit' : 'Move'} artifact: ${artifact.alt}` : undefined)}
       aria-pressed={onSelectArtifact ? selectedId === id : undefined}
       aria-describedby={interactive ? instructionsId : undefined}
+      contentEditable={editable ? false : undefined}
       data-artifact-id={id} data-artifact-position={item.position}
       data-artifact-selected={selectedId === id ? '' : undefined}
       data-artifact-dragging={activeDrag ? '' : undefined}
-      style={{ ...artifact.style, cursor: movable ? (isPressed ? 'grabbing' : 'grab') : onSelectArtifact ? 'pointer' : undefined,
+      style={{ ...artifact.style, marginInlineEnd: editable ? '.22em' : undefined, marginInlineStart: editable && item.position === tokens.length && text && !/\s$/u.test(text) ? '.22em' : undefined, cursor: movable ? (isPressed ? 'grabbing' : 'grab') : onSelectArtifact ? 'pointer' : undefined,
         touchAction: movable ? 'none' : undefined, userSelect: movable ? 'none' : undefined,
         zIndex: activeDrag ? 10 : undefined, opacity: isPressed && !activeDrag ? .82 : 1,
         boxShadow: activeDrag ? '0 12px 32px #0005, 0 2px 8px #0003' : undefined }}
@@ -338,21 +345,27 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
     const items = placements.filter(item => item.position === index);
     items.forEach((item, offset) => {
       children.push(artifactNode(item));
-      if (index < tokens.length || offset < items.length - 1) children.push(<span key={`after-${item.id}`}> </span>);
+      if (!editable && (index < tokens.length || offset < items.length - 1)) children.push(<span key={`after-${item.id}`}> </span>);
     });
     if (index < tokens.length) {
       const token = tokens[index];
       children.push(<span key={`word-${index}`} data-artifact-word={index} style={{ display: 'inline-block', maxWidth: '100%', overflowWrap: 'anywhere' }}>{token.trimEnd()}</span>);
-      children.push(<span key={`space-${index}`}>{token.slice(token.trimEnd().length) || (index === tokens.length - 1 && placements.some(item => item.position === tokens.length) ? ' ' : '')}</span>);
+      children.push(<span key={`space-${index}`}>{token.slice(token.trimEnd().length) || (!editable && index === tokens.length - 1 && placements.some(item => item.position === tokens.length) ? ' ' : '')}</span>);
     }
   }
 
+  if (editable && text.endsWith('\n')) children.push(<br key="editor-tail" data-editor-tail="" />);
+  if (!editor.composing.current) renderedChildren.current = [leadingSpace, ...children];
+
   return <>
-    <div {...props} ref={root} data-artifact-text="" data-artifact-position={placements[0]?.position ?? 0} data-artifact-dragging={drag ? '' : undefined}
+    <div {...props} {...(editable ? editor.handlers : {})} ref={root}
+      contentEditable={editable ? true : undefined} suppressContentEditableWarning={editable} spellCheck={false}
+      role={editable ? 'textbox' : props.role} aria-label={editable ? (props['aria-label'] || 'Canvas text') : props['aria-label']} aria-multiline={editable ? true : undefined}
+      data-artifact-empty={editable && !text ? '' : undefined} data-artifact-text="" data-artifact-position={placements[0]?.position ?? 0} data-artifact-dragging={drag ? '' : undefined}
       style={{ ...props.style, cursor: drag ? 'grabbing' : props.style?.cursor, userSelect: pressed ? 'none' : props.style?.userSelect }}
       onPointerMove={pointerMove} onPointerUp={event => { if (gesture.current?.pointer === event.pointerId) endGesture(true); }}
       onPointerCancel={event => { if (gesture.current?.pointer === event.pointerId) endGesture(false); }} onLostPointerCapture={event => { if (gesture.current?.pointer === event.pointerId) endGesture(false); }}>
-      {leadingSpace}{children}
+      {renderedChildren.current}
     </div>
     <span id={instructionsId} style={hiddenStyle}>{onSelectArtifact ? 'Click or press Enter to edit this artifact. ' : ''}Drag to move the artifact and reflow the text. Use Left and Right arrow keys, or Home and End. Escape cancels a drag.</span>
     <span style={hiddenStyle} role="status" aria-live="polite">{announcement}</span>

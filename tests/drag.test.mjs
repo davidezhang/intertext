@@ -249,3 +249,105 @@ test('cancelling a second-pill drag restores only its position', () => {
   frame(180);
   assert.ok([first, second].every(node => !node.style.transform));
 });
+
+function mountEditor() {
+  const container = document.createElement('div'); document.body.append(container);
+  let state;
+  function Editor() {
+    const [text, setText] = useState('One two three four');
+    const [artifacts, setArtifacts] = useState([
+      { id: 'first', position: 1, artifact: { src: '/first.jpg', alt: 'First' } },
+      { id: 'second', position: 3, artifact: { src: '/second.mp4', kind: 'video', alt: 'Second' } },
+    ]);
+    state = { text, artifacts };
+    return createElement(InlineArtifactsText, { text, artifacts,
+      onTextChange: (value, positions) => { setText(value); setArtifacts(items => items.map(item => ({ ...item, position: positions[item.id] }))); },
+      onPositionChange: (id, position) => setArtifacts(items => items.map(item => item.id === id ? { ...item, position } : item)),
+    });
+  }
+  reactRoot = createRoot(container); act(() => reactRoot.render(createElement(Editor)));
+  surface = container.querySelector('[data-artifact-text]'); surface.focus();
+  return { state: () => state, pills: [...surface.querySelectorAll('artifact-pill')] };
+}
+function selectDOM(start, startOffset, end = start, endOffset = startOffset) {
+  const range = document.createRange(); range.setStart(start, startOffset); range.setEnd(end, endOffset);
+  const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+}
+function nativeEdit(value, inputType = 'insertText') {
+  act(() => surface.dispatchEvent(new window.InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType, data: value })));
+  const range = window.getSelection().getRangeAt(0);
+  range.deleteContents();
+  const node = document.createTextNode(value); range.insertNode(node);
+  selectDOM(node, value.length);
+  act(() => surface.dispatchEvent(new window.InputEvent('input', { bubbles: true, inputType, data: value })));
+}
+function key(key, extra = {}) {
+  act(() => surface.dispatchEvent(new window.KeyboardEvent('keydown', { bubbles: true, cancelable: true, key, ...extra })));
+}
+
+test('in-place edits keep the caret and shift pills with their surrounding words', () => {
+  const { state, pills } = mountEditor();
+  const media = pills.map(pill => pill.shadowRoot.querySelector('img,video'));
+  const word = surface.querySelector('[data-artifact-word="0"]').firstChild;
+  selectDOM(word, 0, word, 3);
+  nativeEdit('New bright');
+  assert.equal(state().text, 'New bright two three four');
+  assert.deepEqual(state().artifacts.map(item => item.position), [2, 4]);
+  nativeEdit(' ideas');
+  assert.equal(state().text, 'New bright ideas two three four');
+  assert.deepEqual(state().artifacts.map(item => item.position), [3, 5]);
+  assert.deepEqual([...surface.querySelectorAll('artifact-pill')], pills);
+  assert.deepEqual(pills.map(pill => pill.shadowRoot.querySelector('img,video')), media);
+});
+
+test('replacing all text protects pills and supports undo/redo', () => {
+  const { state, pills } = mountEditor();
+  selectDOM(surface, 0, surface, surface.childNodes.length);
+  nativeEdit('Hello 世界\nNew ideas 👋', 'insertFromPaste');
+  assert.equal(state().text, 'Hello 世界\nNew ideas 👋');
+  assert.deepEqual([...surface.querySelectorAll('artifact-pill')], pills);
+  key('z', { ctrlKey: true });
+  assert.equal(state().text, 'One two three four');
+  assert.deepEqual(state().artifacts.map(item => item.position), [1, 3]);
+  key('z', { ctrlKey: true, shiftKey: true });
+  assert.equal(state().text, 'Hello 世界\nNew ideas 👋');
+  assert.equal(surface.querySelectorAll('artifact-pill').length, 2);
+});
+
+test('empty text remains editable and paste ignores rich formatting', () => {
+  const { state, pills } = mountEditor();
+  selectDOM(surface, 0, surface, surface.childNodes.length);
+  nativeEdit('', 'deleteContentBackward');
+  assert.equal(state().text, '');
+  assert.equal(surface.hasAttribute('data-artifact-empty'), true);
+  assert.deepEqual([...surface.querySelectorAll('artifact-pill')], pills);
+  selectDOM(surface, surface.childNodes.length);
+  const paste = new window.Event('paste', { bubbles: true, cancelable: true });
+  Object.defineProperty(paste, 'clipboardData', { value: { getData: type => type === 'text/plain' ? '<b>Plain</b>\ntext' : '<b>Styled</b>' } });
+  act(() => surface.dispatchEvent(paste));
+  assert.equal(state().text, '<b>Plain</b>\ntext');
+  assert.equal(surface.querySelector('b'), null);
+});
+
+test('IME composition is committed only after composition ends', () => {
+  const { state } = mountEditor();
+  const word = surface.querySelector('[data-artifact-word="0"]').firstChild;
+  selectDOM(word, 0, word, 3);
+  act(() => surface.dispatchEvent(new window.CompositionEvent('compositionstart', { bubbles: true })));
+  word.nodeValue = '日本語'; selectDOM(word, 3);
+  act(() => surface.dispatchEvent(new window.InputEvent('input', { bubbles: true, isComposing: true, inputType: 'insertCompositionText', data: '日本語' })));
+  assert.equal(state().text, 'One two three four');
+  act(() => surface.dispatchEvent(new window.CompositionEvent('compositionend', { bubbles: true, data: '日本語' })));
+  assert.equal(state().text, '日本語 two three four');
+});
+
+test('Enter leaves a usable caret on the final empty line', () => {
+  const { state } = mountEditor();
+  selectDOM(surface, surface.childNodes.length);
+  act(() => surface.dispatchEvent(new window.InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType: 'insertParagraph' })));
+  assert.equal(state().text, 'One two three four\n');
+  assert.ok(surface.querySelector('[data-editor-tail]'));
+  assert.equal(window.getSelection().focusNode, surface);
+  nativeEdit('Next line');
+  assert.equal(state().text, 'One two three four\nNext line');
+});

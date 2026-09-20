@@ -222,10 +222,10 @@ export default function App() {
     clearTimeout(previewTimers.current.get(pill.id)); updatePill(pill.id, { expanded: true });
     previewTimers.current.set(pill.id, setTimeout(() => { updatePill(pill.id, { expanded: false }); previewTimers.current.delete(pill.id); }, pill.duration + 700));
   }
-  function updateText(value: string) {
+  function updateText(value: string, positions?: Record<string, number>) {
     setText(value);
     const count = (value.match(/\S+/gu) || []).length;
-    setPills(current => current.map(pill => ({ ...pill, position: Math.min(pill.position, count) })));
+    setPills(current => current.map(pill => ({ ...pill, position: Math.min(positions?.[pill.id] ?? pill.position, count) })));
   }
   function resetGlobal() { updateText(defaultText); setFontSize(100); setDark(true); setViewport('desktop'); }
   function uploadFile(file?: File) {
@@ -242,7 +242,7 @@ export default function App() {
       <div className={`canvas-inner ${viewport}`}>
         <div ref={composition} className="composition" style={{ '--type-scale': fontSize / 100 } as CSSProperties}>
           <InlineArtifactsText className="specimen" text={text} artifacts={artifacts} selectedId={selectedId}
-            onPositionChange={(id, position) => updatePill(id, { position })} onSelectArtifact={selectPill}
+            onTextChange={updateText} onPositionChange={(id, position) => updatePill(id, { position })} onSelectArtifact={selectPill}
             onArtifactDragStart={id => { setSelectedId(id); setInspector(null); }} />
         </div>
       </div>
@@ -255,9 +255,8 @@ export default function App() {
       <header className="sidebar-header"><span>{inspector === 'global' ? 'Global settings' : selected?.name || 'Pill settings'}</span><button className="icon-button" aria-label="Close settings" title="Close settings" onClick={closeInspector}><X size={15} /></button></header>
       <div className="sidebar-sections">
         {inspector === 'global' ? <>
-          <ControlSection name="text" title="Text" icon={<Type size={15} />} open={globalPanel === 'text'} onToggle={() => toggleGlobal('text')}>
-            <label className="field-heading" htmlFor="preview-text">Text</label>
-            <textarea id="preview-text" aria-label="Preview text" value={text} onChange={e => updateText(e.target.value)} />
+          <ControlSection name="text" title="Typography" icon={<Type size={15} />} open={globalPanel === 'text'} onToggle={() => toggleGlobal('text')}>
+            <p className="control-hint">Click the text on the canvas to edit it.</p>
             <RangeControl label="Type scale" value={fontSize} min={50} max={160} step={1} unit="%" onChange={setFontSize} />
           </ControlSection>
           <ControlSection name="canvas" title="Canvas" icon={<Monitor size={15} />} open={globalPanel === 'canvas'} onToggle={() => toggleGlobal('canvas')}>
