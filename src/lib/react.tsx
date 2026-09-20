@@ -1,5 +1,5 @@
 'use client';
-import { createElement, forwardRef, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type HTMLAttributes, type PointerEvent as ReactPointerEvent } from 'react';
+import { createElement, forwardRef, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type HTMLAttributes, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { containsPoint, findInsertion, isSettled, stepSpring, type Axis, type Box, type Point } from './drag-layout.js';
 import './artifact-pill.js';
@@ -42,9 +42,26 @@ export interface InlineArtifactTextProps extends Omit<HTMLAttributes<HTMLDivElem
   movable?: boolean;
 }
 
-type Drag = { index: number; width: number; height: number };
+export interface InlineArtifactItem {
+  /** Stable identity, retained when the pill moves between words. */
+  id: string;
+  position: number;
+  artifact: ArtifactPillProps;
+}
+
+export interface InlineArtifactsTextProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'onSelect'> {
+  text: string;
+  artifacts: InlineArtifactItem[];
+  onPositionChange: (id: string, position: number) => void;
+  onSelectArtifact?: (id: string) => void;
+  onArtifactDragStart?: (id: string) => void;
+  selectedId?: string | null;
+  movable?: boolean;
+}
+
+type Drag = { id: string; index: number; width: number; height: number };
 type Gesture = {
-  pointer: number; origin: Point; point: Point; grab: Point; width: number; height: number;
+  id: string; pointer: number; origin: Point; point: Point; grab: Point; width: number; height: number;
   original: number; preview: number; active: boolean; valid: boolean; lastRetarget: Point;
   velocity: Point; lastTime: number; samples: { point: Point; time: number }[];
 };
@@ -53,26 +70,32 @@ const hiddenStyle: CSSProperties = { position: 'absolute', width: 1, height: 1, 
 const useBrowserLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /** The text reflows during drag. Controlled position is committed once on release. */
-export function InlineArtifactText({ text, position, onPositionChange, artifact, movable = true, ...props }: InlineArtifactTextProps) {
+export function InlineArtifactText({ position, onPositionChange, artifact, ...props }: InlineArtifactTextProps) {
+  return <InlineArtifactsText {...props} artifacts={[{ id: 'artifact', position, artifact }]} onPositionChange={(_, next) => onPositionChange(next)} />;
+}
+
+export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelectArtifact, onArtifactDragStart, selectedId, movable = true, ...props }: InlineArtifactsTextProps) {
   const root = useRef<HTMLDivElement>(null);
-  const pill = useRef<ArtifactPillElement>(null);
+  const pill = useRef<ArtifactPillElement | null>(null);
+  const pillNodes = useRef(new Map<string, ArtifactPillElement>());
   const gesture = useRef<Gesture | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
-  const [pressed, setPressed] = useState(false);
+  const [pressed, setPressed] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const pointerFrame = useRef(0);
   const springFrame = useRef(0);
   const springs = useRef(new Map<HTMLElement, MovingNode>());
   const snapshots = useRef<Map<HTMLElement, DOMRect> | null>(null);
-  const pillOffset = useRef<Point>({ x: 0, y: 0 });
+  const offsets = useRef(new Map<HTMLElement, Point>());
   const releaseVelocity = useRef<Point | null>(null);
   const reducedMotion = useRef(false);
   const cancelRef = useRef<() => void>(() => {});
   const instructionsId = useId();
   const tokens = text.match(/\S+\s*/gu) || [];
   const leadingSpace = text.match(/^\s+/u)?.[0] || '';
-  const committed = Math.max(0, Math.min(tokens.length, Math.round(position)));
-  const at = drag?.index ?? committed;
+  const clamp = (position: number) => Math.max(0, Math.min(tokens.length, Math.round(position)));
+  const placements = artifacts.map(item => ({ ...item, position: drag?.id === item.id ? drag.index : clamp(item.position) }));
+  const layoutKey = JSON.stringify(placements.map(({ id, position }) => [id, position]));
 
   function nodes() {
     return [...(root.current?.querySelectorAll<HTMLElement>('[data-artifact-word], artifact-pill') || [])];
@@ -84,21 +107,20 @@ export function InlineArtifactText({ text, position, onPositionChange, artifact,
 
   function naturalBox(node: HTMLElement): Box {
     const box = node.getBoundingClientRect();
-    const motion = springs.current.get(node);
-    const offset = node === pill.current ? pillOffset.current : { x: motion?.x.value || 0, y: motion?.y.value || 0 };
+    const offset = offsets.current.get(node) || { x: 0, y: 0 };
     return { left: box.left - offset.x, right: box.right - offset.x, top: box.top - offset.y, bottom: box.bottom - offset.y, width: box.width, height: box.height };
   }
 
   function paintOffset(node: HTMLElement, x: number, y: number) {
     node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     node.style.willChange = 'transform';
-    if (node === pill.current) pillOffset.current = { x, y };
+    offsets.current.set(node, { x, y });
   }
 
   function restoreNode(node: HTMLElement) {
     node.style.removeProperty('transform');
     node.style.removeProperty('will-change');
-    if (node === pill.current) pillOffset.current = { x: 0, y: 0 };
+    offsets.current.delete(node);
   }
 
   function animateSprings() {
@@ -160,7 +182,7 @@ export function InlineArtifactText({ text, position, onPositionChange, artifact,
       animateSprings();
     }
     followPointer();
-  }, [at, drag]);
+  }, [layoutKey, drag]);
 
   useEffect(() => {
     const query = matchMedia('(prefers-reduced-motion: reduce)');
@@ -192,7 +214,7 @@ export function InlineArtifactText({ text, position, onPositionChange, artifact,
     const area = root.current.getBoundingClientRect();
     // Only the text surface accepts a drop; a control over the text does not.
     const hit = document.elementFromPoint(active.point.x, active.point.y);
-    active.valid = containsPoint(area, active.point, 36) && (!hit || root.current.contains(hit) || !hit.closest('button, input, textarea, select, aside'));
+    active.valid = containsPoint(area, active.point, 36) && (!hit || root.current.contains(hit) || !hit.closest('button, input, textarea, select, aside, a'));
     let next = active.preview;
     if (active.valid && Math.hypot(active.point.x - active.lastRetarget.x, active.point.y - active.lastRetarget.y) >= 8) {
       const words = [...root.current.querySelectorAll<HTMLElement>('[data-artifact-word]')].map(naturalBox);
@@ -202,7 +224,7 @@ export function InlineArtifactText({ text, position, onPositionChange, artifact,
       captureLayout();
       active.preview = next;
       active.lastRetarget = { ...active.point };
-      flushSync(() => setDrag({ index: next, width: active.width, height: active.height }));
+      flushSync(() => setDrag({ id: active.id, index: next, width: active.width, height: active.height }));
     }
     followPointer();
   }
@@ -218,33 +240,36 @@ export function InlineArtifactText({ text, position, onPositionChange, artifact,
     releaseVelocity.current = active.active && commit && recentRelease ? active.velocity : { x: 0, y: 0 };
     gesture.current = null;
     if (root.current?.hasPointerCapture(active.pointer)) root.current.releasePointerCapture(active.pointer);
-    setPressed(false);
+    setPressed(null);
     setDrag(null);
     if (active.active) {
       if (commit && active.valid) {
-        onPositionChange(destination);
+        onPositionChange(active.id, destination);
         setAnnouncement(`Artifact moved to position ${destination + 1} of ${tokens.length + 1}.`);
       } else setAnnouncement('Move cancelled.');
-    }
-    requestAnimationFrame(() => pill.current?.focus({ preventScroll: true }));
+    } else if (commit) onSelectArtifact?.(active.id);
+    const focusTarget = pill.current;
+    requestAnimationFrame(() => focusTarget?.isConnected && focusTarget.focus({ preventScroll: true }));
   }
   cancelRef.current = () => endGesture(false);
 
-  function pointerDown(event: ReactPointerEvent<ArtifactPillElement>) {
+  function pointerDown(event: ReactPointerEvent<ArtifactPillElement>, item: InlineArtifactItem) {
     if (!movable || event.button !== 0 || !event.isPrimary || gesture.current) return;
     event.preventDefault();
+    pill.current = event.currentTarget;
+    const committed = clamp(item.position);
     const box = event.currentTarget.getBoundingClientRect();
     const point = { x: event.clientX, y: event.clientY };
     const now = performance.now();
     gesture.current = {
-      pointer: event.pointerId, origin: point, point, grab: { x: point.x - box.left, y: point.y - box.top },
+      id: item.id, pointer: event.pointerId, origin: point, point, grab: { x: point.x - box.left, y: point.y - box.top },
       width: box.width, height: box.height, original: committed, preview: committed, active: false, valid: true,
       lastRetarget: point, velocity: { x: 0, y: 0 }, lastTime: now, samples: [{ point, time: now }],
     };
     // The container stays mounted while the pill moves to a different word boundary.
     root.current!.setPointerCapture(event.pointerId);
     event.currentTarget.focus({ preventScroll: true });
-    setPressed(true);
+    setPressed(item.id);
   }
 
   function pointerMove(event: ReactPointerEvent<HTMLDivElement>) {
@@ -261,55 +286,75 @@ export function InlineArtifactText({ text, position, onPositionChange, artifact,
     if (!active.active) {
       if (Math.hypot(active.point.x - active.origin.x, active.point.y - active.origin.y) < 6) return;
       active.active = true;
+      onArtifactDragStart?.(active.id);
       captureLayout();
       springs.current.delete(pill.current!);
-      setDrag({ index: active.preview, width: active.width, height: active.height });
+      setDrag({ id: active.id, index: active.preview, width: active.width, height: active.height });
     }
     if (!pointerFrame.current) pointerFrame.current = requestAnimationFrame(updateDrag);
   }
 
-  function moveTo(index: number) {
+  function moveTo(id: string, index: number) {
     if (gesture.current) return;
     captureLayout();
-    onPositionChange(index);
+    onPositionChange(id, index);
     setAnnouncement(`Artifact moved to position ${index + 1} of ${tokens.length + 1}.`);
-    requestAnimationFrame(() => pill.current?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => pillNodes.current.get(id)?.focus({ preventScroll: true }));
   }
 
-  const artifactNode = <ArtifactPill {...artifact} key="artifact" ref={pill}
-    width={drag ? `${drag.width}px` : artifact.width} height={drag ? `${drag.height}px` : artifact.height}
-    expanded={drag ? false : artifact.expanded} hoverExpand={drag ? false : artifact.hoverExpand}
-    duration={drag ? '0ms' : artifact.duration}
-    tabIndex={movable ? 0 : artifact.tabIndex} role={movable ? 'button' : artifact.role}
-    aria-label={movable ? `Move artifact: ${artifact.alt}` : artifact['aria-label']}
-    aria-describedby={movable ? instructionsId : undefined}
-    data-artifact-dragging={drag ? '' : undefined}
-    style={{ ...artifact.style, cursor: movable ? (pressed ? 'grabbing' : 'grab') : undefined,
-      touchAction: movable ? 'none' : undefined, userSelect: movable ? 'none' : undefined,
-      zIndex: drag ? 10 : undefined, opacity: pressed && !drag ? .82 : 1,
-      boxShadow: drag ? '0 12px 32px #0005, 0 2px 8px #0003' : undefined }}
-    onPointerDown={pointerDown}
-    onKeyDown={event => {
-      if (!movable) return;
-      const next = event.key === 'ArrowLeft' ? committed - 1 : event.key === 'ArrowRight' ? committed + 1 : event.key === 'Home' ? 0 : event.key === 'End' ? tokens.length : null;
-      if (next !== null) { event.preventDefault(); moveTo(Math.max(0, Math.min(tokens.length, next))); }
-    }} />;
+  function artifactNode(item: InlineArtifactItem) {
+    const { id, artifact } = item;
+    const activeDrag = drag?.id === id ? drag : null;
+    const isPressed = pressed === id;
+    const interactive = movable || Boolean(onSelectArtifact);
+    return <ArtifactPill {...artifact} key={`artifact-${id}`} ref={node => { if (node) pillNodes.current.set(id, node); else pillNodes.current.delete(id); }}
+      width={activeDrag ? `${activeDrag.width}px` : artifact.width} height={activeDrag ? `${activeDrag.height}px` : artifact.height}
+      expanded={activeDrag ? false : artifact.expanded} hoverExpand={activeDrag ? false : artifact.hoverExpand}
+      duration={activeDrag ? '0ms' : artifact.duration}
+      tabIndex={interactive ? 0 : artifact.tabIndex} role={interactive ? 'button' : artifact.role}
+      aria-label={artifact['aria-label'] || (interactive ? `${onSelectArtifact ? 'Edit' : 'Move'} artifact: ${artifact.alt}` : undefined)}
+      aria-pressed={onSelectArtifact ? selectedId === id : undefined}
+      aria-describedby={interactive ? instructionsId : undefined}
+      data-artifact-id={id} data-artifact-position={item.position}
+      data-artifact-selected={selectedId === id ? '' : undefined}
+      data-artifact-dragging={activeDrag ? '' : undefined}
+      style={{ ...artifact.style, cursor: movable ? (isPressed ? 'grabbing' : 'grab') : onSelectArtifact ? 'pointer' : undefined,
+        touchAction: movable ? 'none' : undefined, userSelect: movable ? 'none' : undefined,
+        zIndex: activeDrag ? 10 : undefined, opacity: isPressed && !activeDrag ? .82 : 1,
+        boxShadow: activeDrag ? '0 12px 32px #0005, 0 2px 8px #0003' : undefined }}
+      onPointerDown={event => pointerDown(event, item)}
+      onClick={event => { if (!movable || event.detail === 0) onSelectArtifact?.(id); }}
+      onKeyDown={event => {
+        if (onSelectArtifact && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); onSelectArtifact(id); return; }
+        if (!movable) return;
+        const committed = clamp(item.position);
+        const next = event.key === 'ArrowLeft' ? committed - 1 : event.key === 'ArrowRight' ? committed + 1 : event.key === 'Home' ? 0 : event.key === 'End' ? tokens.length : null;
+        if (next !== null) { event.preventDefault(); moveTo(id, clamp(next)); }
+      }} />;
+  }
 
-  const children = tokens.flatMap((token, index) => [
-    ...(index === at ? [artifactNode, <span key="after-artifact"> </span>] : []),
-    <span key={`word-${index}`} data-artifact-word={index} style={{ display: 'inline-block', maxWidth: '100%', overflowWrap: 'anywhere' }}>{token.trimEnd()}</span>,
-    <span key={`space-${index}`}>{token.slice(token.trimEnd().length) || (index === tokens.length - 1 && at === tokens.length ? ' ' : '')}</span>,
-  ]);
-  if (at === tokens.length) children.push(artifactNode);
+  const children: ReactNode[] = [];
+  for (let index = 0; index <= tokens.length; index++) {
+    const items = placements.filter(item => item.position === index);
+    items.forEach((item, offset) => {
+      children.push(artifactNode(item));
+      if (index < tokens.length || offset < items.length - 1) children.push(<span key={`after-${item.id}`}> </span>);
+    });
+    if (index < tokens.length) {
+      const token = tokens[index];
+      children.push(<span key={`word-${index}`} data-artifact-word={index} style={{ display: 'inline-block', maxWidth: '100%', overflowWrap: 'anywhere' }}>{token.trimEnd()}</span>);
+      children.push(<span key={`space-${index}`}>{token.slice(token.trimEnd().length) || (index === tokens.length - 1 && placements.some(item => item.position === tokens.length) ? ' ' : '')}</span>);
+    }
+  }
 
   return <>
-    <div {...props} ref={root} data-artifact-position={at} data-artifact-dragging={drag ? '' : undefined}
+    <div {...props} ref={root} data-artifact-text="" data-artifact-position={placements[0]?.position ?? 0} data-artifact-dragging={drag ? '' : undefined}
       style={{ ...props.style, cursor: drag ? 'grabbing' : props.style?.cursor, userSelect: pressed ? 'none' : props.style?.userSelect }}
       onPointerMove={pointerMove} onPointerUp={event => { if (gesture.current?.pointer === event.pointerId) endGesture(true); }}
-      onPointerCancel={() => endGesture(false)} onLostPointerCapture={() => endGesture(false)}>
+      onPointerCancel={event => { if (gesture.current?.pointer === event.pointerId) endGesture(false); }} onLostPointerCapture={event => { if (gesture.current?.pointer === event.pointerId) endGesture(false); }}>
       {leadingSpace}{children}
     </div>
-    <span id={instructionsId} style={hiddenStyle}>Drag to move the artifact and reflow the text. Use Left and Right arrow keys, or Home and End. Escape cancels a drag.</span>
+    <span id={instructionsId} style={hiddenStyle}>{onSelectArtifact ? 'Click or press Enter to edit this artifact. ' : ''}Drag to move the artifact and reflow the text. Use Left and Right arrow keys, or Home and End. Escape cancels a drag.</span>
     <span style={hiddenStyle} role="status" aria-live="polite">{announcement}</span>
   </>;
 }

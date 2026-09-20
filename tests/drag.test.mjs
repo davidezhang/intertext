@@ -23,7 +23,7 @@ window.HTMLElement.prototype.hasPointerCapture = function(id) { return captures.
 window.HTMLElement.prototype.releasePointerCapture = function(id) { captures.delete(id); };
 
 const { createRoot } = await import('react-dom/client');
-const { InlineArtifactText } = await import('../dist/lib/react.js');
+const { InlineArtifactText, InlineArtifactsText } = await import('../dist/lib/react.js');
 let reactRoot, surface;
 
 // Deterministic inline layout: three words per line, with a larger pill slot.
@@ -61,6 +61,33 @@ function mount(kind = 'image') {
   surface = container.querySelector('[data-artifact-position]');
   const pill = surface.querySelector('artifact-pill');
   return { pill, changes, media: pill.shadowRoot.querySelector('img, video') };
+}
+
+function mountMany() {
+  const changes = [], selections = [], starts = [];
+  const container = document.createElement('div');
+  document.body.append(container);
+  let update;
+  function Harness() {
+    const [artifacts, setArtifacts] = useState([
+      { id: 'first', position: 1, artifact: { src: '/first.jpg', alt: 'First', width: '150px' } },
+      { id: 'second', position: 4, artifact: { src: '/second.mp4', kind: 'video', alt: 'Second', width: '150px' } },
+    ]);
+    update = setArtifacts;
+    return createElement(InlineArtifactsText, {
+      text: 'One two three four five six', artifacts,
+      onPositionChange: (id, position) => {
+        changes.push([id, position]);
+        setArtifacts(items => items.map(item => item.id === id ? { ...item, position } : item));
+      },
+      onSelectArtifact: id => selections.push(id), onArtifactDragStart: id => starts.push(id),
+    });
+  }
+  reactRoot = createRoot(container);
+  act(() => reactRoot.render(createElement(Harness)));
+  surface = container.querySelector('[data-artifact-text]');
+  return { first: surface.querySelector('[data-artifact-id="first"]'), second: surface.querySelector('[data-artifact-id="second"]'),
+    changes, selections, starts, update: callback => act(() => update(callback)) };
 }
 
 function pointer(node, type, x, y) {
@@ -163,4 +190,62 @@ test('a click does not reorder; keyboard movement remains available', () => {
   act(() => pill.dispatchEvent(new window.KeyboardEvent('keydown', { bubbles: true, key: 'End' })));
   assert.equal(position(), 6);
   assert.deepEqual(changes, [6]);
+});
+
+test('a second pill reflows independently, preserving both media nodes', () => {
+  const { first, second, changes, selections, starts } = mountMany();
+  const firstMedia = first.shadowRoot.querySelector('img');
+  const secondMedia = second.shadowRoot.querySelector('video');
+  pointer(second, 'pointerdown', 270, 105);
+  frame();
+  pointer(surface, 'pointermove', 35, 40);
+  frame();
+  assert.equal(second.dataset.artifactPosition, '0');
+  assert.equal(first.dataset.artifactPosition, '1');
+  assert.equal(second.getBoundingClientRect().left, 5);
+  assert.deepEqual(starts, ['second']);
+  assert.deepEqual(changes, []);
+  pointer(surface, 'pointerup', 35, 40);
+  assert.deepEqual(changes, [['second', 0]]);
+  assert.deepEqual(selections, [], 'drag release must not open settings');
+  assert.equal(first.shadowRoot.querySelector('img'), firstMedia);
+  assert.equal(second.shadowRoot.querySelector('video'), secondMedia);
+  frame(180);
+  assert.ok([first, second].every(node => !node.style.transform));
+});
+
+test('pointer and keyboard selection identify the correct pill without moving it', () => {
+  const { first, second, selections, changes } = mountMany();
+  pointer(second, 'pointerdown', 270, 105);
+  pointer(surface, 'pointerup', 270, 105);
+  act(() => first.dispatchEvent(new window.KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })));
+  assert.deepEqual(selections, ['second', 'first']);
+  assert.deepEqual(changes, []);
+});
+
+test('editing or removing one pill leaves another pill intact', () => {
+  const { first, second, update } = mountMany();
+  const media = second.shadowRoot.querySelector('video');
+  update(items => items.map(item => item.id === 'first' ? { ...item, artifact: { ...item.artifact, width: '90px', fit: 'fill' } } : item));
+  assert.equal(first.getAttribute('width'), '90px');
+  assert.equal(second.getAttribute('width'), '150px');
+  assert.equal(second.shadowRoot.querySelector('video'), media);
+  update(items => items.filter(item => item.id !== 'first'));
+  assert.equal(surface.querySelectorAll('artifact-pill').length, 1);
+  assert.equal(surface.querySelector('artifact-pill'), second);
+  assert.equal(second.shadowRoot.querySelector('video'), media);
+});
+
+test('cancelling a second-pill drag restores only its position', () => {
+  const { first, second, changes } = mountMany();
+  pointer(second, 'pointerdown', 270, 105);
+  frame();
+  pointer(surface, 'pointermove', 35, 40);
+  frame();
+  act(() => window.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape' })));
+  assert.equal(first.dataset.artifactPosition, '1');
+  assert.equal(second.dataset.artifactPosition, '4');
+  assert.deepEqual(changes, []);
+  frame(180);
+  assert.ok([first, second].every(node => !node.style.transform));
 });

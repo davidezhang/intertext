@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { ArtifactPill, InlineArtifactText } from '../dist/lib/react.js';
+import { ArtifactPill, InlineArtifactText, InlineArtifactsText } from '../dist/lib/react.js';
 import { registerArtifactPill } from '../dist/lib/artifact-pill.js';
 
 test('native and React entry points import safely without browser globals', () => {
@@ -65,4 +65,13 @@ test('movement exposes keyboard instructions and a live announcement region', ()
 
 test('React build preserves the client directive for React Server Component consumers', () => {
   assert.match(readFileSync(new URL('../dist/lib/react.js', import.meta.url), 'utf8'), /^['"]use client['"];/);
+});
+
+test('multiple pills can share a boundary, including an empty text block', () => {
+  const artifacts = ['first', 'second', 'third'].map(id => ({ id, position: 20, artifact: { src: `/${id}.jpg`, alt: id } }));
+  const html = renderToStaticMarkup(createElement(InlineArtifactsText, { text: '', artifacts, onPositionChange() {} }));
+  assert.equal((html.match(/<artifact-pill/g) || []).length, 3);
+  assert.ok(html.indexOf('data-artifact-id="first"') < html.indexOf('data-artifact-id="second"'));
+  assert.ok(html.indexOf('data-artifact-id="second"') < html.indexOf('data-artifact-id="third"'));
+  assert.doesNotMatch(html, /data-artifact-word=/);
 });

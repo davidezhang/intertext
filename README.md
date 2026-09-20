@@ -15,7 +15,9 @@ Open the local URL printed by Vite. `pnpm build` builds both the studio (`dist/s
 
 On the current Codex machine, `./scripts/dev.sh` also works with the bundled Node runtime when Node is missing from PATH.
 
-The canvas always fills the window. **Text**, **Media**, **Shape**, **Motion**, **Canvas**, and **Export** are collapsible sections in one right-hand sidebar. Keyboard shortcuts: T, M, S, A, C, E. Escape closes the active section or restores hidden controls. Canvas contains the dark/light background and fluid/375-pixel preview settings. The sidebar header collapses the controls; the Controls button restores them. Export previews and downloads code inside the same sidebar. Reset restores dark mode.
+The canvas always fills the window. The icon-only sliders button opens **global settings**: Text, Canvas, and Export. Click a pill (or focus it and press Enter) to open its own Media, Shape, Motion, and placement settings in the same right-hand sidebar. Each pill has independent media, sizing, fitting, and animation. Escape or a click on the canvas closes settings. Keyboard shortcuts T, C, E open the corresponding global section.
+
+The **+** button adds a pill at a random word boundary, preferring an unoccupied location. It brings the new pill into view and focuses it so it is ready to drag or move with the arrow keys. Dragging keeps settings closed. Remove a pill from its settings footer. Canvas contains dark/light backgrounds and fluid/375-pixel preview settings; Export includes every pill in the composition. Reset global settings restores the default text, type scale, dark mode, and fluid canvas without resetting individual pill designs.
 
 Upload media stays in your browser using an object URL. URL media is fetched directly from the URL you enter. Settings and uploaded files are session-only; export a snippet to retain the configuration. Add the original media file to your own project when using that snippet.
 
@@ -113,7 +115,30 @@ export function EditableHeading() {
 }
 ```
 
-`position` is the boundary before word N: zero is the beginning, and `words.length` is the end. The wrapper manages one pill per text block. It is a controlled plain-text composition, not a rich-text editor; drag is limited to the current block. Pointer events support mouse, pen, and touch. Focus the pill and use Left/Right or Home/End to move it. Escape cancels an active drag; releasing outside the block cancels placement. Position changes are announced to assistive technology.
+`position` is the boundary before word N: zero is the beginning, and `words.length` is the end. `InlineArtifactText` manages one pill per text block. For multiple pills, use `InlineArtifactsText` with stable IDs:
+
+```tsx
+import { useState } from 'react';
+import { InlineArtifactsText, type InlineArtifactItem } from '@design-components/artifact-pill/react';
+
+export function Composition() {
+  const [artifacts, setArtifacts] = useState<InlineArtifactItem[]>([
+    { id: 'lake', position: 1, artifact: { src: '/lake.jpg', alt: 'An alpine lake', width: '3.3em' } },
+    { id: 'flowers', position: 4, artifact: { src: '/flowers.mp4', kind: 'video', alt: 'Flowers in the breeze', width: '2em' } },
+  ]);
+  return <InlineArtifactsText
+    text="Designing coherent systems for new computing interfaces."
+    artifacts={artifacts}
+    onPositionChange={(id, position) => setArtifacts(items =>
+      items.map(item => item.id === id ? { ...item, position } : item)
+    )}
+  />;
+}
+```
+
+`onSelectArtifact(id)` handles a click or Enter/Space activation, independently of dragging. `selectedId` marks the selected pill; `onArtifactDragStart(id)` can close an editor while dragging. Pills at the same boundary retain array order. Updating one item preserves the other pills and their media nodes. The original single-pill API remains compatible.
+
+Both wrappers are controlled plain-text compositions, not rich-text editors; drag is limited to the current block. Pointer events support mouse, pen, and touch. Focus a pill and use Left/Right or Home/End to move it. Escape cancels an active drag; releasing outside the block cancels placement. Position changes are announced to assistive technology.
 
 While dragging, the pill follows the exact point you grabbed and the words reflow immediately around its new position. The same media element stays mounted. Interruptible springs soften the movement of words and the pill's release; there is no insertion cursor or duplicate drag image. `onPositionChange` fires once on a valid release, so cancellation restores the original placement without updating your state. Reduced motion keeps direct pointer tracking and skips the settling animation.
 
@@ -164,7 +189,7 @@ pill.toggleAttribute('expanded');
 
 The component uses the browser's native inline layout, Shadow DOM, CSS object-fit, CSS transitions, and pointer events. Pretext was considered, but custom text measurement is unnecessary for this flow. The studio's controls are direct React controls, so DialKit and Motion are not shipped as dependencies.
 
-`pnpm test` verifies package imports without DOM globals, SSR attributes, false boolean handling, placement boundaries, safe text escaping/Unicode, movement accessibility markup, and the React client directive. DOM interaction tests use a deterministic wrapping layout to verify reflow before release, media identity, grab offset, pointer capture, reversal, single commit, cancellation, keyboard movement, and reduced motion. Browser verification covers pointer dragging across wrapped lines, media rendering, responsive layouts, full-screen geometry, and overlay controls. Browser-specific autoplay and codecs remain subject to the host browser.
+`pnpm test` verifies package imports without DOM globals, SSR attributes, false boolean handling, placement boundaries, safe text escaping/Unicode, movement accessibility markup, and the React client directive. DOM interaction tests use a deterministic wrapping layout to verify reflow before release, media identity, grab offset, pointer capture, reversal, single commit, cancellation, keyboard movement, and reduced motion. Multi-pill checks cover independent dragging, click versus drag selection, editing/removal, shared boundaries, and random insertion. Browser verification covers pointer dragging across wrapped lines, media rendering, responsive layouts, full-screen geometry, and global/per-pill controls. Browser-specific autoplay and codecs remain subject to the host browser.
 
 The studio's interaction and material refinements follow the [Apple design skill](https://www.ui-skills.com/skills/emilkowalski/apple-design): direct manipulation, interruptible settling, anchored sidebar transitions, readable system typography, and reduced motion/transparency/contrast preferences.
 
