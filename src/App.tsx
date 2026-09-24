@@ -149,7 +149,15 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
 }
 
 export default function App() {
-  const [pills, setPills] = useState<PillConfig[]>(() => [createPill('pill-1', 1, 1)]);
+  const [pills, setPills] = useState<PillConfig[]>(() => {
+    const pill = createPill('pill-1', 1, 1);
+    return [{
+      ...pill,
+      media: { ...(samples.find(sample => sample.kind === 'video') ?? pill.media) },
+      hover: true,
+      expandedHeight: pill.height,
+    }];
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [inspector, setInspector] = useState<'global' | 'pill' | null>(null);
   const [globalPanel, setGlobalPanel] = useState<Panel>('text');
