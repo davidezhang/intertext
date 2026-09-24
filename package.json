@@ -8,6 +8,7 @@
   },
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@10.11.1",
   "files": [
     "dist/lib",
     "README.md"
