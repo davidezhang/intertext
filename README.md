@@ -45,7 +45,7 @@ Copy `dist/lib/artifact-pill.js` into your project. It has no React, animation, 
     expanded-width="4.5em"
     expanded-height="1.1em"
   ></artifact-pill>
-  coherent systems.
+  text interfaces for new forms of computing.
 </h1>
 ```
 
@@ -76,13 +76,13 @@ export function Heading() {
       <ArtifactPill
         src="/media/clip.mp4"
         kind="video"
-        alt="Clouds passing a curved concrete building"
+        alt="A monochrome ascent through a steel and glass escalator"
         poster="/media/poster.jpg"
         width="3.3em"
         height="0.85em"
         fit="crop"
       />{' '}
-      coherent systems.
+      text interfaces for new forms of computing.
     </h1>
   );
 }
@@ -99,7 +99,7 @@ export function EditableHeading() {
   const [position, setPosition] = useState(1);
   return (
     <InlineArtifactText
-      text="Designing coherent systems for new computing interfaces."
+      text="Designing text interfaces for new forms of computing."
       position={position}
       onPositionChange={setPosition}
       style={{ fontSize: 'clamp(2rem, 7vw, 8rem)', lineHeight: 1.2 }}
@@ -128,10 +128,10 @@ import { InlineArtifactsText, type InlineArtifactItem } from '@design-components
 export function Composition() {
   const [artifacts, setArtifacts] = useState<InlineArtifactItem[]>([
     { id: 'concrete', position: 1, artifact: { src: '/concrete.jpg', alt: 'Angular concrete beams', width: '3.3em' } },
-    { id: 'architecture', position: 4, artifact: { src: '/concrete-motion.mp4', kind: 'video', alt: 'Clouds passing a curved concrete building', width: '2em' } },
+    { id: 'architecture', position: 4, artifact: { src: '/escalator-motion.mp4', kind: 'video', alt: 'A monochrome ascent through a steel and glass escalator', width: '2em' } },
   ]);
   return <InlineArtifactsText
-    text="Designing coherent systems for new computing interfaces."
+    text="Designing text interfaces for new forms of computing."
     artifacts={artifacts}
     onPositionChange={(id, position) => setArtifacts(items =>
       items.map(item => item.id === id ? { ...item, position } : item)
@@ -216,7 +216,8 @@ The studio's interaction and material refinements follow the [Apple design skill
 
 - **Concrete study** — [Marc Cordeau on Unsplash](https://unsplash.com/photos/Z3MsCdxNJg4), under the [Unsplash License](https://unsplash.com/license). Resized photograph of angular concrete architecture.
 - **Analog loop** — [emirkhan bal on Pexels](https://www.pexels.com/video/spinning-vinyl-record-7202466/), under the [Pexels License](https://www.pexels.com/license/). A four-second monochrome GIF excerpt of a spinning turntable, with a still poster.
-- **Concrete in motion** — [Nuray on Pexels](https://www.pexels.com/video/elegant-brutalist-architecture-against-blue-sky-28883887/), under the [Pexels License](https://www.pexels.com/license/). An eight-second monochrome, silent architectural video excerpt, with a still poster.
+- **Escalator study** — [Therese B. on Pexels](https://www.pexels.com/video/black-and-white-urban-escalator-scene-32250489/), under the [Pexels License](https://www.pexels.com/license/). An eight-second monochrome, silent escalator excerpt with moving steps, rails, and reflections, plus a still poster.
+- **Concrete in motion (legacy asset)** — [Nuray on Pexels](https://www.pexels.com/video/elegant-brutalist-architecture-against-blue-sky-28883887/), under the [Pexels License](https://www.pexels.com/license/). An eight-second monochrome, silent architectural video excerpt, with a still poster.
 - **Shell chair** — [Resource Database on Unsplash](https://unsplash.com/photos/rZ1RPEom9gs), under the [Unsplash License](https://unsplash.com/license). A resized monochrome chair render from the creator's “Musical Chairs” series.
 
 The demo media is in `public/media` and is not included in the reusable library package.

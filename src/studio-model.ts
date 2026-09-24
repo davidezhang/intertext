@@ -9,12 +9,12 @@ export const samples: Media[] = [
     credit: { name: 'Marc Cordeau', url: 'https://unsplash.com/photos/Z3MsCdxNJg4' } },
   { id: 'analog', name: 'Analog loop', kind: 'gif', src: '/media/analog-loop.gif', poster: '/media/analog-loop.jpg', alt: 'A monochrome close-up of a spinning vinyl record and tonearm',
     credit: { name: 'emirkhan bal', url: 'https://www.pexels.com/video/spinning-vinyl-record-7202466/' } },
-  { id: 'architecture', name: 'Concrete in motion', kind: 'video', src: '/media/concrete-motion.mp4', poster: '/media/concrete-motion.jpg', alt: 'Clouds passing a curved concrete building in black and white',
-    credit: { name: 'Nuray', url: 'https://www.pexels.com/video/elegant-brutalist-architecture-against-blue-sky-28883887/' } },
+  { id: 'architecture', name: 'Escalator study', kind: 'video', src: '/media/escalator-motion.mp4', poster: '/media/escalator-motion.jpg', alt: 'A monochrome ascent through a steel and glass escalator',
+    credit: { name: 'Therese B.', url: 'https://www.pexels.com/video/black-and-white-urban-escalator-scene-32250489/' } },
   { id: 'chair', name: 'Shell chair', kind: 'image', src: '/media/shell-chair.jpg', alt: 'A black shell chair casting a soft shadow on a pale gray floor',
     credit: { name: 'Resource Database', url: 'https://unsplash.com/photos/rZ1RPEom9gs' } },
 ];
-export const defaultText = 'Designing coherent systems for new computing interfaces.';
+export const defaultText = 'Designing text interfaces for new forms of computing.';
 export type PillConfig = {
   id: string; name: string; position: number; media: Media;
   width: number; height: number; radius: number; fit: MediaFit; focalX: number; focalY: number;
