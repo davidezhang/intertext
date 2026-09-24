@@ -142,7 +142,7 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 .media-thumbnail{border-radius:5px;aspect-ratio:1.2;height:auto}
 .media-name{font-size:10px;line-height:1.35}
 .controls-sidebar{top:68px;max-height:calc(100dvh - 116px - env(safe-area-inset-bottom))}
-.creator-credit{position:fixed;z-index:20;right:max(20px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));font-size:11px;line-height:20px;color:var(--muted)}
+.creator-credit{margin-top:12px;font-size:11px;line-height:20px;color:var(--muted)}
 .creator-credit a{display:inline-block;padding:2px 0;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:color 140ms ease,text-decoration-color 140ms ease}
 .creator-credit a:hover,.creator-credit a:focus-visible{color:var(--fg);text-decoration-color:currentColor}
 @media(pointer:coarse){.section-toggle,.toggle-row{min-height:44px}.icon-button{min-width:36px;min-height:36px}.preset-row button,.segmented button,.primary-button,.media-actions .text-button{min-height:40px}input[type=range]{height:36px}.sidebar-header{min-height:56px}}

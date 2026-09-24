@@ -289,11 +289,11 @@ export default function App() {
         {error && inspector === 'pill' && <p className="error-text sidebar-error" role="alert">{error}</p>}
       </div>
       <footer className="sidebar-footer">{inspector === 'global'
-        ? <button className="text-button" onClick={resetGlobal}><RotateCcw size={13} /> Reset global settings</button>
+        ? <><button className="text-button" onClick={resetGlobal}><RotateCcw size={13} /> Reset global settings</button>
+          <div className="creator-credit">by <a href="https://www.davidezhang.com/" target="_blank" rel="noopener noreferrer">Davide Zhang</a></div></>
         : selected && <button className="text-button" onClick={() => removePill(selected.id)}><Trash2 size={13} /> Remove pill</button>}
       </footer>
     </aside>
-    <footer className="creator-credit">by <a href="https://www.davidezhang.com/" target="_blank" rel="noopener noreferrer">Davide Zhang</a></footer>
     <span className="visually-hidden" role="status" aria-live="polite">{announcement}</span>
     <input ref={upload} className="visually-hidden" type="file" aria-label="Upload media file" tabIndex={-1} accept="image/jpeg,image/png,image/gif,image/webp,image/avif,video/mp4,video/webm,video/quicktime" onChange={e => { uploadFile(e.target.files?.[0]); e.target.value = ''; }} />
   </div>;
