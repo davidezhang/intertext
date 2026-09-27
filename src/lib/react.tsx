@@ -357,9 +357,10 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
 
   if (editable && empty) {
     // A real editable line gives WebKit a caret target even when only pills remain.
+    // Keep it on its own row so expanding a pill cannot wrap the hint and toggle hover.
     // The visual hint is CSS-only, so it never becomes copied or exported text.
     children.push(<span key="editor-empty" data-editor-empty-slot="" data-placeholder={props['aria-placeholder']}
-      style={{ display: 'inline-block', position: 'relative', minWidth: '1ch', minHeight: '1em' }}><br data-editor-tail="" /></span>);
+      style={{ display: 'block', position: 'relative', minWidth: '1ch', minHeight: '1em' }}><br data-editor-tail="" /></span>);
   } else if (editable && text.endsWith('\n')) children.push(<br key="editor-tail" data-editor-tail="" />);
   if (!editor.composing.current) renderedChildren.current = [leadingSpace, ...children];
 
