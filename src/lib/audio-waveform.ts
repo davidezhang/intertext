@@ -26,6 +26,12 @@ export function waveformSpacing(width: number, count: number, pixelRatio = 1) {
   return { barWidth: bar / pixelRatio, gap: (pitch - bar) / pixelRatio };
 }
 
+/** Frame-rate-independent interpolation of the sharp playback edge. */
+export function smoothPlaybackTime(displayed: number, target: number, elapsedMs: number): number {
+  const amount = 1 - Math.exp(-Math.max(0, elapsedMs) / 70);
+  return displayed + (target - displayed) * amount;
+}
+
 export class AudioWaveform {
   readonly element = document.createElement('div');
   private request?: AbortController;
@@ -33,6 +39,7 @@ export class AudioWaveform {
   private envelope?: Float32Array;
   private count = 32;
   private width = 0;
+  private progress = 0;
   private layer?: HTMLDivElement;
   private outgoing?: HTMLDivElement;
   private fades: Animation[] = [];
@@ -84,6 +91,7 @@ export class AudioWaveform {
     this.request?.abort();
     this.cancelTransition();
     this.envelope = undefined;
+    this.progress = 0;
     this.layer = undefined;
     delete this.element.dataset.resizing;
     this.resize?.observe(this.element);
@@ -109,6 +117,20 @@ export class AudioWaveform {
       if (context) void context.close().catch(() => {});
     }
   }
+  setProgress(time: number, duration: number) {
+    this.progress = Number.isFinite(time) && Number.isFinite(duration) && duration > 0
+      ? Math.max(0, Math.min(1, time / duration)) : 0;
+    if (this.layer) this.paintProgress(this.layer);
+    if (this.outgoing) this.paintProgress(this.outgoing);
+  }
+  private paintProgress(layer: HTMLDivElement) {
+    const count = layer.children.length;
+    Array.from(layer.children).forEach((bar, index) => {
+      const front = `${Math.max(0, Math.min(1, this.progress * count - index)) * 100}%`;
+      const style = (bar as HTMLElement).style;
+      if (style.getPropertyValue('--waveform-played') !== front) style.setProperty('--waveform-played', front);
+    });
+  }
   private render(animate = false) {
     if (!this.envelope) return;
     const peaks = waveformPeaks([this.envelope], this.count);
@@ -120,6 +142,7 @@ export class AudioWaveform {
       bar.style.height = `${Math.max(2, Math.pow(peak, 2.6) * 72) / 80 * 100}%`;
       layer.append(bar);
     });
+    this.paintProgress(layer);
     const previous = this.layer;
     this.layer = layer;
     if (animate && previous && typeof layer.animate === 'function' && !this.reducedMotion()) {

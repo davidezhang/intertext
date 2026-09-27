@@ -139,3 +139,16 @@ test('disconnecting releases ownership and supports reconnect without stale docu
   assert.equal(active(first.element), false);
   assert.equal(first.element.hasAttribute('expanded'), false);
 });
+
+test('playback hover works independently of expansion and releases when disabled', () => {
+ const first = pill();
+ first.element.removeAttribute('hover-expand');
+ first.element.setAttribute('play-on-hover', '');
+ pointer(first.element, 'pointermove', 200, 300);
+ assert.ok(active(first.element));
+ first.element.setAttribute('hover-expand', '');
+ first.element.removeAttribute('hover-expand');
+ assert.ok(active(first.element), 'playback retains hover when expansion is disabled');
+ first.element.removeAttribute('play-on-hover');
+ assert.equal(active(first.element), false);
+});

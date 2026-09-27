@@ -81,7 +81,7 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
   const [url, setUrl] = useState('');
   const [urlKind, setUrlKind] = useState<MediaKind>('image');
   const [error, setError] = useState('');
-  const setMedia = (media: Media) => onChange({ media, paused: media.kind === 'audio' });
+  const setMedia = (media: Media) => onChange({ media, paused: media.kind === 'audio', playOnHover: false });
   const setWidth = (width: number) => onChange({ width });
   const setHeight = (height: number) => onChange({ height });
   const setRadius = (radius: number) => onChange({ radius });
@@ -89,7 +89,7 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
   const setFocalX = (focalX: number) => onChange({ focalX });
   const setFocalY = (focalY: number) => onChange({ focalY });
   const setHover = (hover: boolean) => onChange({ hover });
-  const setPaused = (paused: boolean) => onChange({ paused });
+  const setPaused = (paused: boolean) => onChange({ paused, playOnHover: false });
   const animate = onAnimate;
   function togglePanel(next: Panel) { setPanel(panel === next ? null : next); }
   function loadUrl(event: React.FormEvent) {
@@ -109,7 +109,10 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
             {urlOpen && <form className="url-form" onSubmit={loadUrl}><input aria-label="Media URL" type="url" required placeholder="https://site.com/media.jpg" value={url} onChange={e => setUrl(e.target.value)} /><select aria-label="URL media type" value={urlKind} onChange={e => setUrlKind(e.target.value as MediaKind)}><option value="image">Image</option><option value="gif">GIF</option><option value="video">Video</option><option value="audio">Audio</option></select><button className="primary-button" type="submit">Add <ArrowRight size={13} /></button></form>}
             <div className="media-fields">
             <label className="alt-field">Media description<input aria-label="Media description" value={media.alt} onChange={e => onChange({ media: { ...media, alt: e.target.value } })} /></label>
-            {(media.kind === 'video' || media.kind === 'audio') && <Toggle label={media.kind === 'audio' ? 'Play audio' : 'Play video'} checked={!paused} onChange={v => setPaused(!v)} />}
+            {media.kind !== 'image' && <div className="dial-stack">
+              <Toggle label={`Play ${media.kind === 'gif' ? 'GIF' : media.kind}`} checked={!paused} onChange={v => setPaused(!v)} />
+              <Toggle label="Play on hover" checked={pill.playOnHover} onChange={playOnHover => onChange({ playOnHover, paused: true })} />
+            </div>}
             </div>
             {error && <p className="error-text" role="alert">{error}</p>}
             {media.credit && <div className="media-credit"><a href={media.credit.url} target="_blank" rel="noreferrer">{media.credit.name} ↗</a></div>}
@@ -278,7 +281,7 @@ export default function App() {
     if (!/^image\/(jpeg|png|gif|webp|avif)$|^video\/(mp4|webm|quicktime)$|^audio\/(mpeg|mp3|mp4|x-m4a|aac|wav|wave|x-wav|ogg|webm|flac|x-flac)$/.test(file.type)) { setError('Choose a JPG, PNG, GIF, WebP, AVIF, MP4, WebM, MOV, MP3, WAV, M4A, AAC, OGG, or FLAC file.'); return; }
     if (!pills.some(pill => pill.id === id)) return;
     const media: Media = { id: 'upload', name: file.name, kind: file.type === 'image/gif' ? 'gif' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'image', src: URL.createObjectURL(file), alt: file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ') };
-    updatePill(id, { media, paused: media.kind === 'audio' }); setError('');
+    updatePill(id, { media, paused: media.kind === 'audio', playOnHover: false }); setError('');
   }
 
   return <div className={`studio ${dark ? 'theme-dark' : 'theme-light'}`} onClickCapture={controlSound}

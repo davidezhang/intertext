@@ -47,7 +47,7 @@ class PillHoverController {
     }
 
     const candidate = event.composedPath().find(node => this.elements.has(node as HTMLElement)
-      && (node as HTMLElement).hasAttribute('hover-expand')) as HTMLElement | undefined;
+      && ((node as HTMLElement).hasAttribute('hover-expand') || (node as HTMLElement).hasAttribute('play-on-hover'))) as HTMLElement | undefined;
     const origin = candidate?.getBoundingClientRect();
     this.release();
     if (candidate && origin) {
@@ -86,7 +86,7 @@ export function connectPillHover(element: HTMLElement) {
   controller.elements.add(element);
   const owner = controller;
   return {
-    update: () => { if (!element.hasAttribute('hover-expand')) owner.release(element); },
+    update: () => { if (!element.hasAttribute('hover-expand') && !element.hasAttribute('play-on-hover')) owner.release(element); },
     disconnect: () => {
       owner.release(element);
       owner.elements.delete(element);

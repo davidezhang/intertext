@@ -20,14 +20,14 @@ export type PillConfig = {
   id: string; name: string; position: number; media: Media;
   width: number; height: number; radius: number; fit: MediaFit; focalX: number; focalY: number;
   expandedWidth: number; expandedHeight: number; transition: TransitionConfig;
-  duration: number; easing: string; hover: boolean; expanded: boolean; loop: boolean; paused: boolean;
+  duration: number; easing: string; hover: boolean; expanded: boolean; loop: boolean; paused: boolean; playOnHover: boolean;
 };
 export function createPill(id: string, number: number, position: number): PillConfig {
   return { id, name: `Pill ${number}`, position, media: { ...samples[(number - 1) % samples.length] },
     width: 3.3, height: .85, radius: 200, fit: 'crop', focalX: 50, focalY: 50,
     expandedWidth: 5.12, expandedHeight: 1.11,
     transition: { type: 'easing', duration: .65, ease: [.22, 1, .36, 1] },
-    duration: 650, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', hover: false, expanded: false, loop: false, paused: samples[(number - 1) % samples.length].kind === 'audio' };
+    duration: 650, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', hover: false, expanded: false, loop: false, playOnHover: false, paused: samples[(number - 1) % samples.length].kind === 'audio' };
 }
 export function randomPosition(wordCount: number, occupied: number[], random = Math.random) {
   const boundaries = Array.from({ length: wordCount + 1 }, (_, index) => index);
@@ -41,7 +41,7 @@ export function artifactProps(pill: PillConfig, dark: boolean, reducedMotion: bo
     width: `${pill.width}em`, height: `${pill.height}em`, radius: `${pill.radius}px`, fit: pill.fit,
     position: `${pill.focalX}% ${pill.focalY}%`, duration: `${pill.duration}ms`, easing: pill.easing,
     hoverExpand: pill.hover && !reducedMotion, expanded: pill.expanded && !reducedMotion,
-    expandedWidth: `${pill.expandedWidth}em`, expandedHeight: `${pill.expandedHeight}em`, paused: pill.paused,
+    expandedWidth: `${pill.expandedWidth}em`, expandedHeight: `${pill.expandedHeight}em`, paused: pill.paused, playOnHover: pill.playOnHover,
     'aria-label': `Edit ${pill.name.toLowerCase()}: ${pill.media.alt}`,
     style: { '--artifact-focus': dark ? '#fff' : '#000' } as CSSProperties,
   };

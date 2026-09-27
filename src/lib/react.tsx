@@ -22,14 +22,16 @@ export interface ArtifactPillProps extends HTMLAttributes<ArtifactPillElement> {
   paused?: boolean;
   expanded?: boolean;
   hoverExpand?: boolean;
+  /** Play audio, video, or GIF while the pointer is over the pill. */
+  playOnHover?: boolean;
   expandedWidth?: string;
   expandedHeight?: string;
 }
 
-export const ArtifactPill = forwardRef<ArtifactPillElement, ArtifactPillProps>(function ArtifactPill({ expanded, hoverExpand, expandedWidth, expandedHeight, paused, ...props }, ref) {
+export const ArtifactPill = forwardRef<ArtifactPillElement, ArtifactPillProps>(function ArtifactPill({ expanded, hoverExpand, playOnHover, expandedWidth, expandedHeight, paused, ...props }, ref) {
   return createElement('artifact-pill', {
     ...props, ref, expanded: expanded ? '' : undefined,
-    'hover-expand': hoverExpand ? '' : undefined, paused: paused ? '' : undefined,
+    'hover-expand': hoverExpand ? '' : undefined, 'play-on-hover': playOnHover ? '' : undefined, paused: paused ? '' : undefined,
     'expanded-width': expandedWidth, 'expanded-height': expandedHeight,
   });
 });
@@ -316,7 +318,7 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
     const interactive = movable || Boolean(onSelectArtifact);
     return <ArtifactPill {...artifact} key={`artifact-${id}`} ref={node => { if (node) pillNodes.current.set(id, node); else pillNodes.current.delete(id); }}
       width={activeDrag ? `${activeDrag.width}px` : artifact.width} height={activeDrag ? `${activeDrag.height}px` : artifact.height}
-      expanded={activeDrag ? false : artifact.expanded} hoverExpand={activeDrag ? false : artifact.hoverExpand}
+      expanded={activeDrag ? false : artifact.expanded} hoverExpand={activeDrag ? false : artifact.hoverExpand} playOnHover={activeDrag ? false : artifact.playOnHover}
       duration={activeDrag ? '0ms' : artifact.duration}
       tabIndex={interactive ? 0 : artifact.tabIndex} role={interactive ? 'button' : artifact.role}
       aria-label={artifact['aria-label'] || (interactive ? `${onSelectArtifact ? 'Edit' : 'Move'} artifact: ${artifact.alt}` : undefined)}

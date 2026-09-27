@@ -189,7 +189,8 @@ While dragging, the pill follows the exact point you grabbed and the words reflo
 | `expanded-width` | `expandedWidth` | Expanded width; default `4.2em` |
 | `expanded-height` | `expandedHeight` | Expanded height; default `1.25em` |
 | `poster` | `poster` | Video poster image |
-| `paused` | `paused` | Pause video; native boolean attribute: omit to allow autoplay |
+| `paused` | `paused` | Pause audio, video, or show a GIF still; omit to allow video/GIF autoplay |
+| `play-on-hover` | `playOnHover` | Play audio, video, or GIF while hovered; takes precedence over `paused` |
 
 The pill is `inline-block`, baseline aligned, and capped at `max-width:100%` of its containing block. `em` values scale with the surrounding type. Changing width, height, or radius triggers a CSS transition; text naturally reflows as dimensions change. During size transitions, line breaks move at their actual wrapping threshold. The React wrapper animates individual words when drag or keyboard placement changes. Pointer hover remains active across reflow until the pointer moves outside the area spanning the pill's original and current bounds. Layout-generated enter/leave events cannot restart expansion or activate a sibling under a stationary pointer. Leaving the page, scrolling, resizing, dragging, or disabling hover clears the interaction; keyboard focus and explicit expansion remain independent.
 
@@ -209,7 +210,7 @@ pill.toggleAttribute('expanded');
 
 - Video is muted, inline, and looping. `paused` stops it. Browser autoplay policies may still block playback; supply a poster.
 - Reduced motion disables pill transitions and video autoplay. The studio also disables size loops and hover expansion under reduced motion.
-- GIF animation is intrinsic to the file. It cannot be paused by `paused`; use video or a still image when pause/reduced-motion behavior matters.
+- Paused GIFs display a still canvas preview. Hover playback reveals the animated image while hovered; GIFs do not resume at an exact timeline position. Reduced motion keeps the still preview.
 - Supply meaningful media descriptions. The studio lets you edit them in Media. Interactive pills expose movement instructions and a live region; static images expose alt text.
 - Failed media shows an inline fallback and emits an `artifact-error` event. Supported video codecs depend on the visitor's browser; MP4/H.264 and WebM are the recommended formats.
 - The native element can be used in any normal inline layout. The React wrapper's `movable={false}` disables its drag/keyboard behavior.
@@ -236,6 +237,6 @@ The demo media is in `public/media` and is not included in the reusable library 
 
 ### Audio pills
 
-Choose **Film music**, upload an audio file, or select Audio when adding a URL. The pill displays an amplitude waveform decoded from the actual clip, with black bars on white in dark mode and inverse colors in light mode. Use **Play audio** in Media settings to listen. Audio never starts automatically. The sample is the original synth music from the Intertext demo film, without its UI sound effects, covered by MIT.
+Choose **Film music**, upload an audio file, or select Audio when adding a URL. The pill displays an amplitude waveform decoded from the actual clip, with black bars on white in dark mode and inverse colors in light mode. Use **Play audio** in Media settings to listen. **Play on hover**, directly below playback for audio, video, and GIFs, plays only while the pointer is over the pill. Selecting manual playback switches hover playback off. Played portions fill with the theme’s muted grey; pausing retains the current progress. Audio stays silent on load; hover playback is opt-in and subject to browser audio permissions. The sample is the original synth music from the Intertext demo film, without its UI sound effects, covered by MIT.
 
-Use `kind="audio"` in HTML or React. Call the element’s `play()` method from a user gesture, or remove a previously set `paused` attribute to start playback; `pause()` or setting `paused` stops it. Customize `--artifact-audio-background` and `--artifact-audio-color` for an explicit theme; otherwise colors follow the system theme. Remote audio needs CORS permission for waveform decoding. A dashed baseline means the waveform is unavailable; playback may still work.
+Use `kind="audio"` in HTML or React. Call the element’s `play()` method from a user gesture, or remove a previously set `paused` attribute to start playback; `pause()` or setting `paused` stops it. Customize `--artifact-audio-background`, `--artifact-audio-color`, and `--artifact-audio-progress` for an explicit theme; otherwise colors follow the system theme. Remote audio needs CORS permission for waveform decoding. A dashed baseline means the waveform is unavailable; playback may still work.

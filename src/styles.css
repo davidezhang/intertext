@@ -183,7 +183,7 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 @media(pointer:coarse){.controls-sidebar.dialkit-root{--dial-row-height:44px}}
 @media(prefers-contrast:more){.controls-sidebar.dialkit-root{--dial-text-label:var(--fg);--dial-text-section:var(--fg);--dial-border:var(--fg);--dial-border-hover:var(--fg)}}
 
-.studio{--artifact-audio-background:#000;--artifact-audio-color:#fff}
+.studio{--artifact-audio-background:#000;--artifact-audio-color:#fff;--artifact-audio-progress:var(--muted)}
 .studio.theme-dark{--artifact-audio-background:#fff;--artifact-audio-color:#000}
 
 /* Media controls share filled surfaces, row sizing, and comfortable spacing. */

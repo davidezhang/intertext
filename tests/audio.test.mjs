@@ -5,7 +5,7 @@ import ts from 'typescript';
 import { JSDOM } from 'jsdom';
 const source = readFileSync(new URL('../src/lib/audio-waveform.ts', import.meta.url), 'utf8');
 const output = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
-const { waveformPeaks, waveformBarCount, waveformSpacing } = await import(`data:text/javascript;base64,${Buffer.from(output).toString('base64')}`);
+const { waveformPeaks, waveformBarCount, waveformSpacing, smoothPlaybackTime } = await import(`data:text/javascript;base64,${Buffer.from(output).toString('base64')}`);
 test('waveform represents both channels, silence, and short clips without invalid values', () => {
   assert.deepEqual(waveformPeaks([new Float32Array([0, .25, 0, -.5]), new Float32Array([1, 0, 0, 0])], 4), [1, .25, 0, .5]);
   assert.deepEqual(waveformPeaks([new Float32Array(20)], 4), [0, 0, 0, 0]);
@@ -31,6 +31,14 @@ test('bars and gaps share a whole device-pixel pitch at fractional container wid
   }
  }
 });
+test('hard playback edge interpolates without overshoot and consistently across frame rates', () => {
+ const first = smoothPlaybackTime(10, 10.2, 16);
+ const second = smoothPlaybackTime(first, 10.2, 16);
+ assert.ok(first > 10 && first < second && second < 10.2);
+ assert.ok(Math.abs(second - smoothPlaybackTime(10, 10.2, 32)) < 1e-10);
+ assert.equal(smoothPlaybackTime(10, 10.2, 0), 10);
+ assert.ok(Math.abs(smoothPlaybackTime(10, 10.2, 700) - 10.2) < .00001);
+});
 const observers = [];
 globalThis.ResizeObserver = class {
  constructor(callback) { this.callback = callback; observers.push(this); }
@@ -41,10 +49,10 @@ globalThis.ResizeObserver = class {
 const dom = new JSDOM('<!doctype html><body></body>', { url: 'http://localhost' });
 for (const key of ['window', 'document', 'HTMLElement', 'HTMLImageElement', 'HTMLVideoElement', 'HTMLAudioElement', 'HTMLMediaElement', 'customElements', 'CustomEvent']) globalThis[key] = dom.window[key];
 let reducedMotion = false;
-globalThis.matchMedia = () => ({ matches: reducedMotion, addEventListener() {}, removeEventListener() {} });
+globalThis.matchMedia = () => ({ get matches() { return reducedMotion; }, addEventListener() {}, removeEventListener() {} });
 let plays = 0, pauses = 0;
 dom.window.HTMLMediaElement.prototype.play = async function () { plays++; };
-dom.window.HTMLMediaElement.prototype.pause = function () { pauses++; };
+dom.window.HTMLMediaElement.prototype.pause = function () { pauses++; if (Object.hasOwn(this, 'paused')) this.paused = true; this.dispatchEvent(new dom.window.Event('pause')); };
 globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4) });
 globalThis.AudioContext = class {
  async decodeAudioData() { return { numberOfChannels: 1, getChannelData: () => new Float32Array([0, .5, 1, .25]) }; }
@@ -98,4 +106,90 @@ test('resize reversals retain bars, reduced motion updates immediately, and disc
  await new Promise(resolve => setTimeout(resolve, 150));
  assert.equal(pill.shadowRoot.querySelector('.waveform-bars').children.length, 32);
  assert.equal(observer.active, false);
+});
+
+test('playback fill tracks time, pauses, seeking, loops, and density changes without leaking frames', async () => {
+ const frames = new Map(); let nextFrame = 0;
+ globalThis.requestAnimationFrame = callback => { frames.set(++nextFrame, callback); return nextFrame; };
+ globalThis.cancelAnimationFrame = id => frames.delete(id);
+ const pill = document.createElement('artifact-pill');
+ pill.setAttribute('kind', 'audio'); pill.setAttribute('src', '/clip.wav');
+ document.body.append(pill);
+ await new Promise(resolve => setTimeout(resolve, 0));
+ const audio = pill.shadowRoot.querySelector('audio');
+ Object.defineProperty(audio, 'duration', { configurable: true, value: 48 });
+ Object.defineProperty(audio, 'paused', { configurable: true, writable: true, value: false });
+ const emit = name => audio.dispatchEvent(new dom.window.Event(name));
+ const fills = () => [...pill.shadowRoot.querySelector('.waveform-bars').children].map(bar => bar.style.getPropertyValue('--waveform-played'));
+ audio.currentTime = 12; emit('playing');
+ assert.equal(frames.size, 1);
+ assert.equal(fills()[0], '100%');
+ assert.equal(fills()[9], '0%');
+ audio.currentTime = 24; [...frames.values()][0]();
+ assert.equal(fills()[15], '100%'); assert.equal(fills()[16], '0%');
+ audio.paused = true; emit('pause');
+ assert.equal(frames.size, 0); assert.equal(fills()[15], '100%');
+ audio.currentTime = 6; emit('seeked');
+ observers.at(-1).resize(80);
+ assert.equal(fills().length, 8);
+ assert.ok(parseFloat(fills()[0]) > 0);
+ assert.equal(fills()[2], '0%');
+ audio.currentTime = 0; emit('timeupdate');
+ assert.ok(fills().every(fill => fill === '0%'));
+ reducedMotion = true; audio.paused = false; emit('playing');
+ assert.equal(frames.size, 0);
+ audio.currentTime = 24; emit('timeupdate'); assert.equal(fills()[3], '100%');
+ reducedMotion = false; emit('playing'); assert.equal(frames.size, 1);
+ pill.setAttribute('src', '/other.wav');
+ await new Promise(resolve => setTimeout(resolve, 0));
+ assert.ok(fills().every(fill => fill === '0%'));
+ pill.remove(); assert.equal(frames.size, 0);
+});
+
+test('hover playback overrides paused for audio and video and stops when hover ends', () => {
+ for (const kind of ['audio', 'video']) {
+  const pill = document.createElement('artifact-pill');
+  pill.setAttribute('kind', kind); pill.setAttribute('src', '/clip');
+  pill.setAttribute('paused', ''); pill.setAttribute('play-on-hover', '');
+  const before = plays;
+  document.body.append(pill);
+  pill.removeAttribute('paused');
+  assert.equal(plays, before, 'hover mode stays idle even when paused is removed');
+  pill.setAttribute('data-hover-active', '');
+  assert.equal(plays, before + 1);
+  const previousPauses = pauses;
+  pill.removeAttribute('data-hover-active');
+  assert.ok(pauses > previousPauses);
+  reducedMotion = true;
+  pill.setAttribute('data-hover-active', '');
+  assert.equal(plays, before + 1, 'reduced motion suppresses automatic hover playback');
+  reducedMotion = false;
+  pill.remove();
+ }
+});
+
+test('GIF hover playback swaps an accessible still preview for the animated image', () => {
+ const original = dom.window.HTMLCanvasElement.prototype.getContext;
+ let draws = 0;
+ dom.window.HTMLCanvasElement.prototype.getContext = () => ({ drawImage() { draws++; } });
+ const pill = document.createElement('artifact-pill');
+ try {
+  pill.setAttribute('kind', 'gif'); pill.setAttribute('src', '/clip.gif');
+  pill.setAttribute('alt', 'Animated flowers'); pill.setAttribute('play-on-hover', '');
+  document.body.append(pill);
+  const image = pill.shadowRoot.querySelector('img');
+  Object.defineProperties(image, { complete: { value: true }, naturalWidth: { value: 400 }, naturalHeight: { value: 300 } });
+  image.dispatchEvent(new dom.window.Event('load'));
+  const still = pill.shadowRoot.querySelector('canvas');
+  assert.equal(still.hidden, false); assert.equal(image.hidden, true);
+  assert.equal(still.getAttribute('aria-label'), 'Animated flowers');
+  assert.ok(draws > 0);
+  pill.setAttribute('data-hover-active', '');
+  assert.equal(still.hidden, true); assert.equal(image.hidden, false);
+  pill.removeAttribute('data-hover-active');
+  assert.equal(still.hidden, false); assert.equal(image.hidden, true);
+  image.dispatchEvent(new dom.window.Event('error'));
+  assert.equal(still.hidden, true);
+  assert.equal(pill.shadowRoot.querySelector('.error').hidden, false);
+ } finally { pill.remove(); dom.window.HTMLCanvasElement.prototype.getContext = original; }
 });
