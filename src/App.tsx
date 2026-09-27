@@ -6,6 +6,7 @@ import { Slider, Toggle, Folder } from 'dialkit';
 import { DialTransition } from './DialTransition';
 import { compileTransition } from './studio-motion';
 import { artifactProps, createPill, defaultText, randomPosition, samples, type Media, type PillConfig } from './studio-model';
+import { studioSounds } from './studio-sound';
 
 function ToolbarIcon({ name }: { name: 'add' | 'settings' }) {
   // Native 18px coordinates give both icons matching stroke width and edge alignment.
@@ -15,7 +16,7 @@ function ToolbarIcon({ name }: { name: 'add' | 'settings' }) {
 }
 
 function RangeControl({ label, value, onChange, min, max, step = .05, unit = 'em' }: { label: string; value: number; onChange: (n: number) => void; min: number; max: number; step?: number; unit?: string }) {
-  return <Slider label={label} value={value} onChange={onChange} min={min} max={max} step={step} unit={unit} />;
+  return <Slider label={label} value={value} onChange={next => { if (next !== value) studioSounds.play('tick'); onChange(next); }} min={min} max={max} step={step} unit={unit} />;
 }
 
 function CodePanel({ artifacts, text, hasUpload }: { artifacts: InlineArtifactItem[]; text: string; hasUpload: boolean }) {
@@ -40,7 +41,7 @@ function CodePanel({ artifacts, text, hasUpload }: { artifacts: InlineArtifactIt
   const htmlCode = `<script type="module" src="./artifact-pill.js"></script>\n\n<p style="font-size: clamp(2rem, 6vw, 5rem); line-height: 1.25">\n${htmlParts.join('\n')}\n</p>`;
   const code = tab === 'react' ? reactCode : htmlCode;
   async function copy() {
-    try { await navigator.clipboard.writeText(code); setCopyError(false); setCopied(true); setTimeout(() => setCopied(false), 1800); }
+    try { await navigator.clipboard.writeText(code); studioSounds.play('tick'); setCopyError(false); setCopied(true); setTimeout(() => setCopied(false), 1800); }
     catch { setCopyError(true); }
   }
   function download() {
@@ -48,7 +49,7 @@ function CodePanel({ artifacts, text, hasUpload }: { artifacts: InlineArtifactIt
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = tab === 'react' ? 'Headline.tsx' : 'index.html'; anchor.click(); URL.revokeObjectURL(url);
   }
   return <div className="code-panel">
-    <div className="code-tabs"><div className="segmented"><button aria-pressed={tab === 'react'} onClick={() => setTab('react')}>React</button><button aria-pressed={tab === 'html'} onClick={() => setTab('html')}>HTML / any framework</button></div><button className="text-button" onClick={copy}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied' : 'Copy code'}</button></div>
+    <div className="code-tabs"><div className="segmented"><button aria-pressed={tab === 'react'} onClick={() => setTab('react')}>React</button><button aria-pressed={tab === 'html'} onClick={() => setTab('html')}>HTML / any framework</button></div><button className="text-button" data-ui-sound="none" onClick={copy}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied' : 'Copy code'}</button></div>
     <pre tabIndex={0} aria-label="Component code"><code>{code}</code></pre>
     <p className="code-note">{tab === 'react' ? 'Install the local package using the README, then import the React wrapper. Drag placement is included.' : 'Copy dist/lib/artifact-pill.js beside this file. The native element works with HTML, Vue, Svelte, and more. Drag placement is provided by the React text wrapper.'}</p>
     {hasUpload && <p className="code-note">Add your uploaded media to your project and replace the sample file path.</p>}
@@ -61,7 +62,7 @@ type Panel = 'media' | 'text' | 'shape' | 'motion' | 'canvas' | 'export' | null;
 
 function ControlSection({ name, title, icon, open, onToggle, children }: { name: Exclude<Panel, null>; title: string; icon: ReactNode; open: boolean; onToggle: () => void; children: ReactNode }) {
   return <section className={`control-section ${open ? 'is-open' : ''}`}>
-    <button className="section-toggle" id={`${name}-toggle`} aria-expanded={open} aria-controls={`${name}-controls`} onClick={onToggle}>
+    <button className="section-toggle" data-ui-sound="thump" id={`${name}-toggle`} aria-expanded={open} aria-controls={`${name}-controls`} onClick={onToggle}>
       {icon}<span>{title}</span><ChevronDown size={14} className="section-chevron" />
     </button>
     <div className="section-reveal" data-open={open} aria-hidden={!open} inert={!open}>
@@ -138,11 +139,11 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
             </div>
             <p className="control-hint">Set each dimension independently.</p>
             <div className="panel-rule" />
-            <DialTransition value={pill.transition} onChange={transition => onChange({ transition, ...compileTransition(transition) })} />
+            <DialTransition value={pill.transition} onChange={transition => { studioSounds.play('tick'); onChange({ transition, ...compileTransition(transition) }); }} />
             <div className="panel-rule" />
             <div className="dial-stack"><Toggle label="Animate on hover" checked={hover} onChange={setHover} />
             <Toggle label="Loop animation" checked={loop} onChange={value => onChange({ loop: value, expanded: false })} /></div>
-            <button className="primary-button full-width" onClick={animate} disabled={reducedMotion || loop}><Play size={13} fill="currentColor" /> Play animation <span>↗</span></button>
+            <button className="primary-button full-width" data-ui-sound="thump" onClick={animate} disabled={reducedMotion || loop}><Play size={13} fill="currentColor" /> Play animation <span>↗</span></button>
             <p className="control-hint">{reducedMotion ? 'Reduced motion is enabled on your device.' : 'Changes width and height with text reflow.'}</p>
         </ControlSection>
   </>;
@@ -166,6 +167,7 @@ export default function App() {
   const [dark, setDark] = useState(true);
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(studioSounds.enabled);
   const [error, setError] = useState('');
   const [announcement, setAnnouncement] = useState('');
   const [revealId, setRevealId] = useState<string | null>(null);
@@ -183,9 +185,26 @@ export default function App() {
   function updatePill(id: string, patch: Partial<PillConfig>) {
     setPills(current => current.map(pill => pill.id === id ? { ...pill, ...patch } : pill));
   }
-  function selectPill(id: string) { setSelectedId(id); setInspector('pill'); setError(''); }
+  function selectPill(id: string) { if (inspector !== 'pill' || selectedId !== id) studioSounds.play('thump'); setSelectedId(id); setInspector('pill'); setError(''); }
   function closeInspector() { setInspector(null); setSelectedId(null); }
   function toggleGlobal(next: Panel) { setGlobalPanel(current => current === next ? null : next); }
+  function setSoundsEnabled(enabled: boolean) {
+    studioSounds.setEnabled(enabled); setSoundEnabled(enabled);
+    if (enabled) studioSounds.play('tick');
+  }
+  function controlSound(event: React.MouseEvent<HTMLDivElement>) {
+    const control = (event.target as Element).closest<HTMLElement>('button, [role="button"], [role="switch"], [role="radio"], summary');
+    if (!control || control.matches('artifact-pill, :disabled, [aria-disabled="true"]')
+      || control.closest('[inert], [data-ui-sound="none"]')) return;
+    if (control.matches('[aria-pressed="true"], [role="radio"][aria-checked="true"]')) return;
+    studioSounds.play(control.dataset.uiSound === 'thump' ? 'thump' : 'tick');
+  }
+
+  useEffect(() => {
+    const stopWhenHidden = () => { if (document.hidden) studioSounds.stop(); };
+    document.addEventListener('visibilitychange', stopWhenHidden);
+    return () => { document.removeEventListener('visibilitychange', stopWhenHidden); studioSounds.dispose(); };
+  }, []);
 
   useEffect(() => {
     const query = matchMedia('(prefers-reduced-motion: reduce)');
@@ -219,14 +238,14 @@ export default function App() {
   useEffect(() => {
     const shortcuts = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
-      if (event.key === 'Escape') { closeInspector(); return; }
+      if (event.key === 'Escape') { if (inspector) studioSounds.play('tick'); closeInspector(); return; }
       if ((event.target as HTMLElement).closest('input, textarea, select, [contenteditable=true]') || event.metaKey || event.ctrlKey || event.altKey) return;
       const next = ({ t: 'text', c: 'canvas', e: 'export' } as const)[event.key.toLowerCase() as 't'];
-      if (next) { event.preventDefault(); setGlobalPanel(next); setInspector('global'); setSelectedId(null); }
+      if (next && !event.repeat) { event.preventDefault(); studioSounds.play('thump'); setGlobalPanel(next); setInspector('global'); setSelectedId(null); }
     };
     window.addEventListener('keydown', shortcuts);
     return () => window.removeEventListener('keydown', shortcuts);
-  }, []);
+  }, [inspector]);
 
   function addPill() {
     const number = nextPill.current++;
@@ -260,19 +279,21 @@ export default function App() {
     updatePill(id, { media }); setError('');
   }
 
-  return <div className={`studio ${dark ? 'theme-dark' : 'theme-light'}`}>
-    <main className="canvas" aria-label="Live component preview" onPointerDown={event => { if (!(event.target as HTMLElement).closest('artifact-pill')) closeInspector(); }}>
+  return <div className={`studio ${dark ? 'theme-dark' : 'theme-light'}`} onClickCapture={controlSound}
+    onPointerDownCapture={event => { if (event.button === 0) void studioSounds.unlock(); }} onKeyDownCapture={() => { void studioSounds.unlock(); }}>
+    <main className="canvas" aria-label="Live component preview" onPointerDown={event => { if (!(event.target as HTMLElement).closest('artifact-pill')) { if (inspector) studioSounds.play('tick'); closeInspector(); } }}>
       <div className={`canvas-inner ${viewport}`}>
         <div ref={composition} className="composition" style={{ '--type-scale': fontSize / 100 } as CSSProperties}>
           <InlineArtifactsText className="specimen" text={text} artifacts={artifacts} selectedId={selectedId}
-            onTextChange={updateText} onPositionChange={(id, position) => updatePill(id, { position })} onSelectArtifact={selectPill}
+            onTextChange={(value, positions) => { if (value !== text) studioSounds.play('tick'); updateText(value, positions); }}
+            onPositionChange={(id, position) => { if (pills.find(pill => pill.id === id)?.position !== position) studioSounds.play('thump'); updatePill(id, { position }); }} onSelectArtifact={selectPill}
             onArtifactDragStart={id => { setSelectedId(id); setInspector(null); }} />
         </div>
       </div>
     </main>
     <div className="canvas-toolbar" role="toolbar" aria-label="Canvas actions">
-      <button className="toolbar-button" aria-label="Add pill" title="Add pill" onClick={addPill}><ToolbarIcon name="add" /></button>
-      <button className="toolbar-button" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><ToolbarIcon name="settings" /></button>
+      <button className="toolbar-button" data-ui-sound="thump" aria-label="Add pill" title="Add pill" onClick={addPill}><ToolbarIcon name="add" /></button>
+      <button className="toolbar-button" data-ui-sound="thump" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><ToolbarIcon name="settings" /></button>
     </div>
     <aside id="settings-sidebar" className={`controls-sidebar dialkit-root ${!inspector ? 'is-collapsed' : ''}`} data-theme={dark ? 'dark' : 'light'} aria-label={inspector === 'global' ? 'Global settings' : 'Pill settings'} aria-hidden={!inspector} inert={!inspector}>
       <header className="sidebar-header"><span>{inspector === 'global' ? 'Global settings' : selected?.name || 'Pill settings'}</span><button className="icon-button" aria-label="Close settings" title="Close settings" onClick={closeInspector}><X size={15} /></button></header>
@@ -291,6 +312,7 @@ export default function App() {
           <ControlSection name="export" title="Export" icon={<Code2 size={15} />} open={globalPanel === 'export'} onToggle={() => toggleGlobal('export')}>
             <CodePanel artifacts={artifacts} text={text} hasUpload={pills.some(pill => pill.media.id === 'upload')} />
           </ControlSection>
+          <div className="sound-preference" data-ui-sound="none"><Toggle label="UI sounds" checked={soundEnabled} onChange={setSoundsEnabled} /></div>
         </> : selected && <PillSettings key={selected.id} pill={selected} wordCount={wordCount} reducedMotion={reducedMotion}
           onChange={patch => updatePill(selected.id, patch)} onAnimate={() => animate(selected)}
           onUpload={() => { uploadTarget.current = selected.id; upload.current?.click(); }} />}
