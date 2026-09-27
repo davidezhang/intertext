@@ -11,3 +11,7 @@ The media files below are third-party assets. They are excluded from Intertext's
 | `shell-chair.jpg` | [Resource Database on Unsplash](https://unsplash.com/photos/rZ1RPEom9gs) | [Unsplash License](https://unsplash.com/license) |
 
 These files are used in the studio demo and are not included in the reusable library package. Exporting a composition does not grant additional rights to its media. Use media you own or have permission to use, and follow the relevant source license.
+
+## Film soundtrack
+
+`intertext-music.m4a` is the original synthesized music used in the Intertext demo film, regenerated with `sound(include_ui=False)` in `film/render.py` to omit interaction accents and typing clicks. It contains generated oscillators and seeded noise, with no third-party music or samples, and is covered by the repository MIT license.

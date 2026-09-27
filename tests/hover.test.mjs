@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 
 const { window } = new JSDOM('<!doctype html><body></body>');
-for (const key of ['window', 'document', 'HTMLElement', 'HTMLImageElement', 'HTMLVideoElement', 'customElements', 'CustomEvent']) {
+for (const key of ['window', 'document', 'HTMLElement', 'HTMLImageElement', 'HTMLVideoElement', 'HTMLAudioElement', 'HTMLMediaElement', 'customElements', 'CustomEvent']) {
   globalThis[key] = key === 'window' ? window : window[key];
 }
 globalThis.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });

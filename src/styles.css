@@ -182,3 +182,15 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 .controls-sidebar .dialkit-toggle{width:100%}
 @media(pointer:coarse){.controls-sidebar.dialkit-root{--dial-row-height:44px}}
 @media(prefers-contrast:more){.controls-sidebar.dialkit-root{--dial-text-label:var(--fg);--dial-text-section:var(--fg);--dial-border:var(--fg);--dial-border-hover:var(--fg)}}
+
+.studio{--artifact-audio-background:#000;--artifact-audio-color:#fff}
+.studio.theme-dark{--artifact-audio-background:#fff;--artifact-audio-color:#000}
+
+/* Media controls share filled surfaces, row sizing, and comfortable spacing. */
+.media-fields{display:flex;flex-direction:column;gap:12px;margin-top:20px}
+.media-fields .alt-field{display:flex;flex-direction:column;gap:8px;margin:0}
+.controls-sidebar .alt-field input,.controls-sidebar .url-form input,.controls-sidebar .url-form select{height:var(--dial-row-height);min-width:0;margin:0;padding:0 12px;border:0;box-shadow:none;background:var(--dial-surface);border-radius:var(--dial-radius);font-size:12px;line-height:18px}
+.controls-sidebar .dialkit-labeled-control{height:var(--dial-row-height);padding:4px 4px 4px 12px;gap:12px;border:0;box-shadow:none}
+.controls-sidebar .dialkit-labeled-control-label{font-size:12px}
+.controls-sidebar .dialkit-labeled-control .dialkit-segmented{height:calc(var(--dial-row-height) - 8px);margin-right:0;padding:2px}
+.controls-sidebar .dialkit-labeled-control .dialkit-segmented-button{min-width:32px;padding:3px 6px;font-size:12px;line-height:18px}

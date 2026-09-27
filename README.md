@@ -1,6 +1,6 @@
 # Intertext
 
-A responsive image, GIF, or silent looping video that sits between words. The studio is a full-screen canvas that defaults to dark mode, with a single collapsible control sidebar. The reusable pill is a dependency-free **Web Component**; React bindings add controlled placement, pointer/touch dragging, and keyboard movement.
+A responsive image, GIF, audio waveform, or silent looping video that sits between words. The studio is a full-screen canvas that defaults to dark mode, with a single collapsible control sidebar. The reusable pill is a dependency-free **Web Component**; React bindings add controlled placement, pointer/touch dragging, and keyboard movement.
 
 ## Free core and future composition packs
 
@@ -31,7 +31,7 @@ The icon-only sliders button opens **global settings**: Typography, Canvas, and 
 
 The **+** button adds a pill at a random word boundary, preferring an unoccupied location. It brings the new pill into view and focuses it so it is ready to drag or move with the arrow keys. Dragging keeps settings closed. Remove a pill from its settings footer. Canvas contains dark/light backgrounds and fluid/375-pixel preview settings; Export includes every pill in the composition. Reset global settings restores the default text, type scale, dark mode, and fluid canvas without resetting individual pill designs.
 
-The **UI sounds** toggle in Global settings remembers your choice in this browser. Sounds start with your first interaction: soft thumps for adding/moving pills, opening controls, and playing an animation; short ticks for text edits, slider changes, selections, and export actions. These use the demo film's synthesized noise and bass textures at a restrained volume. Rapid adjustments are rate-limited, muting stops active sounds, and background tabs stay quiet. There is no background music. Audio is local to the studio; exported components remain silent.
+The **UI sounds** toggle in Global settings remembers your choice in this browser. Sounds start with your first interaction: soft thumps for adding/moving pills, opening controls, and playing an animation; short ticks for text edits, slider changes, selections, and export actions. These use the demo film's synthesized noise and bass textures at a restrained volume. Rapid adjustments are rate-limited, muting stops active sounds, and background tabs stay quiet. There is no background music. UI feedback is local to the studio. Audio pills play only on request.
 
 Shape and Motion use [DialKit](https://joshpuckett.me/dialkit) controls embedded in the sidebar. Drag a slider to adjust it, use the arrow keys for fine changes, or focus it and press Enter to type a precise value. Width and height use `em` (relative to the surrounding text); radius uses pixels. Motion shows both starting and target dimensions, with current width and height synchronized with Shape, plus an interactive Bézier editor. **Easing** uses duration and a curve; **Time** uses visual duration and bounce; **Physics** uses stiffness, damping, and mass. Play, hover, and loop use the selected transition. Springs include their settling tail, so their total playback time can exceed the visual duration.
 
@@ -233,3 +233,9 @@ The studio's interaction and material refinements follow the [Apple design skill
 - **Shell chair** — [Resource Database on Unsplash](https://unsplash.com/photos/rZ1RPEom9gs), under the [Unsplash License](https://unsplash.com/license). A resized monochrome chair render from the creator's “Musical Chairs” series.
 
 The demo media is in `public/media` and is not included in the reusable library package. These assets retain their original licenses and are excluded from the repository's MIT license; see the [media license notice](https://github.com/davidezhang/intertext/blob/main/public/media/LICENSE.md) for the file-by-file mapping.
+
+### Audio pills
+
+Choose **Film music**, upload an audio file, or select Audio when adding a URL. The pill displays an amplitude waveform decoded from the actual clip, with black bars on white in dark mode and inverse colors in light mode. Use **Play audio** in Media settings to listen. Audio never starts automatically. The sample is the original synth music from the Intertext demo film, without its UI sound effects, covered by MIT.
+
+Use `kind="audio"` in HTML or React. Call the element’s `play()` method from a user gesture, or remove a previously set `paused` attribute to start playback; `pause()` or setting `paused` stops it. Customize `--artifact-audio-background` and `--artifact-audio-color` for an explicit theme; otherwise colors follow the system theme. Remote audio needs CORS permission for waveform decoding. A dashed baseline means the waveform is unavailable; playback may still work.

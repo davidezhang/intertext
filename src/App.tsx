@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowDownToLine, ArrowLeft, ArrowRight, Check, ChevronDown, X, Trash2, Code2, Copy, Image as ImageIcon, Link2, Monitor, Play, Plus, RotateCcw, Smartphone, Sparkles, Type, RectangleHorizontal } from 'lucide-react';
-import { InlineArtifactsText, type InlineArtifactItem } from './lib/react';
+import { ArtifactPill, InlineArtifactsText, type InlineArtifactItem } from './lib/react';
 import type { MediaKind } from './lib/artifact-pill';
 import { Slider, Toggle, Folder } from 'dialkit';
 import { DialTransition } from './DialTransition';
@@ -25,7 +25,7 @@ function CodePanel({ artifacts, text, hasUpload }: { artifacts: InlineArtifactIt
   const [copyError, setCopyError] = useState(false);
   const items = artifacts.map(({ id, position, artifact }) => {
     const { style: _style, 'aria-label': _label, expanded: _expanded, ...media } = artifact;
-    return { id, position, artifact: { ...media, src: artifact.src.startsWith('blob:') ? `/media/${id}.${artifact.kind === 'video' ? 'mp4' : artifact.kind === 'gif' ? 'gif' : 'jpg'}` : artifact.src } };
+    return { id, position, artifact: { ...media, src: artifact.src.startsWith('blob:') ? `/media/${id}.${artifact.kind === 'audio' ? 'wav' : artifact.kind === 'video' ? 'mp4' : artifact.kind === 'gif' ? 'gif' : 'jpg'}` : artifact.src } };
   });
   const reactCode = `'use client';\nimport { useState } from 'react';\nimport { InlineArtifactsText, type InlineArtifactItem } from '@design-components/artifact-pill/react';\n\nexport default function Headline() {\n  const [artifacts, setArtifacts] = useState<InlineArtifactItem[]>(${JSON.stringify(items, null, 2)});\n  return (\n    <InlineArtifactsText\n      text={${JSON.stringify(text)}}\n      artifacts={artifacts}\n      onPositionChange={(id, position) => setArtifacts(items =>\n        items.map(item => item.id === id ? { ...item, position } : item)\n      )}\n      style={{ fontSize: 'clamp(2rem, 6vw, 5rem)', lineHeight: 1.25 }}\n    />\n  );\n}`;
   const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
@@ -81,7 +81,7 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
   const [url, setUrl] = useState('');
   const [urlKind, setUrlKind] = useState<MediaKind>('image');
   const [error, setError] = useState('');
-  const setMedia = (media: Media) => onChange({ media });
+  const setMedia = (media: Media) => onChange({ media, paused: media.kind === 'audio' });
   const setWidth = (width: number) => onChange({ width });
   const setHeight = (height: number) => onChange({ height });
   const setRadius = (radius: number) => onChange({ radius });
@@ -103,12 +103,14 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
     <div className="pill-placement"><div className="position-control"><span>Position</span><div><button className="icon-button" aria-label="Move pill left" disabled={pill.position === 0} onClick={() => onChange({ position: pill.position - 1 })}><ArrowLeft size={15} /></button><span>{pill.position + 1} / {wordCount + 1}</span><button className="icon-button" aria-label="Move pill right" disabled={pill.position >= wordCount} onClick={() => onChange({ position: pill.position + 1 })}><ArrowRight size={15} /></button></div></div></div>
         <ControlSection name="media" title="Media" icon={<ImageIcon size={15} />} open={panel === 'media'} onToggle={() => togglePanel('media')}>
 
-            <div className="media-grid">{samples.map(item => <button key={item.id} className={`media-card ${media.id === item.id ? 'selected' : ''}`} aria-pressed={media.id === item.id} onClick={() => { setMedia(item); setError(''); }}><div className="media-thumbnail"><img src={item.poster || item.src} alt="" /><span className="media-type">{item.kind.toUpperCase()}</span>{media.id === item.id && <span className="selected-mark"><Check size={12} /></span>}</div><span className="media-name">{item.name}</span></button>)}</div>
+            <div className="media-grid">{samples.map(item => <button key={item.id} className={`media-card ${media.id === item.id ? 'selected' : ''}`} aria-pressed={media.id === item.id} onClick={() => { setMedia(item); setError(''); }}><div className="media-thumbnail"><>{item.kind === 'audio' ? <ArtifactPill src={item.src} kind="audio" alt="" paused width="100%" height="100%" radius="0px" /> : <img src={item.poster || item.src} alt="" />}</><span className="media-type">{item.kind.toUpperCase()}</span>{media.id === item.id && <span className="selected-mark"><Check size={12} /></span>}</div><span className="media-name">{item.name}</span></button>)}</div>
             <div className="media-actions"><button className="primary-button" onClick={onUpload}><Plus size={15} /> Upload media</button><button className="text-button" onClick={() => setUrlOpen(!urlOpen)}><Link2 size={13} /> From URL</button></div>
             {media.id === 'upload' && <p className="uploaded-file">{media.name}</p>}
-            {urlOpen && <form className="url-form" onSubmit={loadUrl}><input aria-label="Media URL" type="url" required placeholder="https://site.com/media.jpg" value={url} onChange={e => setUrl(e.target.value)} /><select aria-label="URL media type" value={urlKind} onChange={e => setUrlKind(e.target.value as MediaKind)}><option value="image">Image</option><option value="gif">GIF</option><option value="video">Video</option></select><button className="primary-button" type="submit">Add <ArrowRight size={13} /></button></form>}
-            <label className="alt-field">Media description<input aria-label="Media description" value={media.alt} onChange={e => setMedia({ ...media, alt: e.target.value })} /></label>
-            {media.kind === 'video' && <Toggle label="Play video" checked={!paused} onChange={v => setPaused(!v)} />}
+            {urlOpen && <form className="url-form" onSubmit={loadUrl}><input aria-label="Media URL" type="url" required placeholder="https://site.com/media.jpg" value={url} onChange={e => setUrl(e.target.value)} /><select aria-label="URL media type" value={urlKind} onChange={e => setUrlKind(e.target.value as MediaKind)}><option value="image">Image</option><option value="gif">GIF</option><option value="video">Video</option><option value="audio">Audio</option></select><button className="primary-button" type="submit">Add <ArrowRight size={13} /></button></form>}
+            <div className="media-fields">
+            <label className="alt-field">Media description<input aria-label="Media description" value={media.alt} onChange={e => onChange({ media: { ...media, alt: e.target.value } })} /></label>
+            {(media.kind === 'video' || media.kind === 'audio') && <Toggle label={media.kind === 'audio' ? 'Play audio' : 'Play video'} checked={!paused} onChange={v => setPaused(!v)} />}
+            </div>
             {error && <p className="error-text" role="alert">{error}</p>}
             {media.credit && <div className="media-credit"><a href={media.credit.url} target="_blank" rel="noreferrer">{media.credit.name} ↗</a></div>}
         </ControlSection>
@@ -121,9 +123,9 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
               <RangeControl label="Radius" value={radius} min={0} max={200} step={1} unit="px" onChange={setRadius} />
             </div>
             <div className="panel-rule" />
-            <span className="field-heading">Media fit</span><div className="segmented fit-controls" role="group" aria-label="Media fit">{(['crop', 'fit', 'fill'] as const).map(option => <button key={option} aria-pressed={fit === option} onClick={() => setFit(option)}>{option[0].toUpperCase() + option.slice(1)}</button>)}</div>
+            {media.kind !== 'audio' && <><span className="field-heading">Media fit</span><div className="segmented fit-controls" role="group" aria-label="Media fit">{(['crop', 'fit', 'fill'] as const).map(option => <button key={option} aria-pressed={fit === option} onClick={() => setFit(option)}>{option[0].toUpperCase() + option.slice(1)}</button>)}</div>
             <p className="control-hint">{fit === 'crop' ? 'Fill the shape. Crop the edges.' : fit === 'fit' ? 'Keep the entire image in view.' : 'Stretch the media to fill the shape.'}</p>
-            <div className="focal-controls"><Folder title="Focal point" defaultOpen={false}><div className="dial-stack"><RangeControl label="Horizontal" value={focalX} min={0} max={100} step={1} unit="%" onChange={setFocalX} /><RangeControl label="Vertical" value={focalY} min={0} max={100} step={1} unit="%" onChange={setFocalY} /></div></Folder></div>
+            <div className="focal-controls"><Folder title="Focal point" defaultOpen={false}><div className="dial-stack"><RangeControl label="Horizontal" value={focalX} min={0} max={100} step={1} unit="%" onChange={setFocalX} /><RangeControl label="Vertical" value={focalY} min={0} max={100} step={1} unit="%" onChange={setFocalY} /></div></Folder></div></>}
         </ControlSection>
         <ControlSection name="motion" title="Motion" icon={<Sparkles size={15} />} open={panel === 'motion'} onToggle={() => togglePanel('motion')}>
 
@@ -273,10 +275,10 @@ export default function App() {
   function uploadFile(file?: File) {
     const id = uploadTarget.current;
     if (!file || !id) return;
-    if (!/^image\/(jpeg|png|gif|webp|avif)$|^video\/(mp4|webm|quicktime)$/.test(file.type)) { setError('Choose a JPG, PNG, GIF, WebP, AVIF, MP4, WebM, or MOV file.'); return; }
+    if (!/^image\/(jpeg|png|gif|webp|avif)$|^video\/(mp4|webm|quicktime)$|^audio\/(mpeg|mp3|mp4|x-m4a|aac|wav|wave|x-wav|ogg|webm|flac|x-flac)$/.test(file.type)) { setError('Choose a JPG, PNG, GIF, WebP, AVIF, MP4, WebM, MOV, MP3, WAV, M4A, AAC, OGG, or FLAC file.'); return; }
     if (!pills.some(pill => pill.id === id)) return;
-    const media: Media = { id: 'upload', name: file.name, kind: file.type === 'image/gif' ? 'gif' : file.type.startsWith('video/') ? 'video' : 'image', src: URL.createObjectURL(file), alt: file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ') };
-    updatePill(id, { media }); setError('');
+    const media: Media = { id: 'upload', name: file.name, kind: file.type === 'image/gif' ? 'gif' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'image', src: URL.createObjectURL(file), alt: file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ') };
+    updatePill(id, { media, paused: media.kind === 'audio' }); setError('');
   }
 
   return <div className={`studio ${dark ? 'theme-dark' : 'theme-light'}`} onClickCapture={controlSound}
@@ -325,6 +327,6 @@ export default function App() {
       </footer>
     </aside>
     <span className="visually-hidden" role="status" aria-live="polite">{announcement}</span>
-    <input ref={upload} className="visually-hidden" type="file" aria-label="Upload media file" tabIndex={-1} accept="image/jpeg,image/png,image/gif,image/webp,image/avif,video/mp4,video/webm,video/quicktime" onChange={e => { uploadFile(e.target.files?.[0]); e.target.value = ''; }} />
+    <input ref={upload} className="visually-hidden" type="file" aria-label="Upload media file" tabIndex={-1} accept="image/jpeg,image/png,image/gif,image/webp,image/avif,video/mp4,video/webm,video/quicktime,audio/*" onChange={e => { uploadFile(e.target.files?.[0]); e.target.value = ''; }} />
   </div>;
 }

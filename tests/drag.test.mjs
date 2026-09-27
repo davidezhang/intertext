@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom';
 import { act, createElement, useState } from 'react';
 
 const { window } = new JSDOM('<!doctype html><body></body>', { url: 'http://localhost/' });
-for (const key of ['window', 'document', 'HTMLElement', 'HTMLImageElement', 'HTMLVideoElement', 'customElements', 'CustomEvent']) {
+for (const key of ['window', 'document', 'HTMLElement', 'HTMLImageElement', 'HTMLVideoElement', 'HTMLAudioElement', 'HTMLMediaElement', 'customElements', 'CustomEvent']) {
   globalThis[key] = key === 'window' ? window : window[key];
 }
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;

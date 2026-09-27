@@ -11,6 +11,7 @@ export const samples: Media[] = [
     credit: { name: 'emirkhan bal', url: 'https://www.pexels.com/video/spinning-vinyl-record-7202466/' } },
   { id: 'architecture', name: 'Escalator study', kind: 'video', src: '/media/escalator-motion.mp4', poster: '/media/escalator-motion.jpg', alt: 'A monochrome ascent through a steel and glass escalator',
     credit: { name: 'Therese B.', url: 'https://www.pexels.com/video/black-and-white-urban-escalator-scene-32250489/' } },
+  { id: 'soundtrack', name: 'Film music', kind: 'audio', src: '/media/intertext-music.m4a', alt: 'The Intertext demo film’s synth music, without UI sound effects' },
   { id: 'chair', name: 'Shell chair', kind: 'image', src: '/media/shell-chair.jpg', alt: 'A black shell chair casting a soft shadow on a pale gray floor',
     credit: { name: 'Resource Database', url: 'https://unsplash.com/photos/rZ1RPEom9gs' } },
 ];
@@ -26,7 +27,7 @@ export function createPill(id: string, number: number, position: number): PillCo
     width: 3.3, height: .85, radius: 200, fit: 'crop', focalX: 50, focalY: 50,
     expandedWidth: 5.12, expandedHeight: 1.11,
     transition: { type: 'easing', duration: .65, ease: [.22, 1, .36, 1] },
-    duration: 650, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', hover: false, expanded: false, loop: false, paused: false };
+    duration: 650, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', hover: false, expanded: false, loop: false, paused: samples[(number - 1) % samples.length].kind === 'audio' };
 }
 export function randomPosition(wordCount: number, occupied: number[], random = Math.random) {
   const boundaries = Array.from({ length: wordCount + 1 }, (_, index) => index);
