@@ -68,7 +68,7 @@ export function restoreSelection(root: HTMLElement, bookmark: TextSelection) {
   const document = root.ownerDocument;
   function point(wanted: number, after: string[]): [Node, number] {
     const tail = root.querySelector('[data-editor-tail]');
-    if (tail && wanted === readDOM(root).text.length) return [root, Array.prototype.indexOf.call(root.childNodes, tail)];
+    if (tail && wanted === readDOM(root).text.length) return [tail.parentNode!, Array.prototype.indexOf.call(tail.parentNode!.childNodes, tail)];
     let count = 0;
     let result: [Node, number] = [root, root.childNodes.length];
     let found = false;

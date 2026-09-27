@@ -43,6 +43,11 @@ export function useInlineEditing(root: RefObject<HTMLDivElement | null>, text: s
     if (!root.current || !onChange || composing.current) return;
     const next = readDOM(root.current);
     const selection = readSelection(root.current);
+    // Deleting the last words can leave browser filler BRs or invisible spaces.
+    if (kind.startsWith('delete') && !next.text.trim()) {
+      next.text = '';
+      if (selection) selection.anchor = selection.focus = 0;
+    }
     const updated = reconcilePositions(current.current, next.text, next.offsets);
     const before = { ...current.current, selection: beforeSelection.current };
     const changed = next.text !== before.text || JSON.stringify(updated) !== JSON.stringify(before.positions);
@@ -106,7 +111,17 @@ export function useInlineEditing(root: RefObject<HTMLDivElement | null>, text: s
     if (cut) replaceSelection('', 'deleteByCut');
   }
 
-  return { composing, handlers: {
+  function focusEmpty() {
+    const element = root.current;
+    if (!element || !onChange || current.current.text.trim() || composing.current) return;
+    // Keep focus inside the tap/click gesture so iOS can show its keyboard.
+    element.focus({ preventScroll: true });
+    const end = current.current.text.length;
+    const after = Object.keys(current.current.positions);
+    restoreSelection(element, { anchor: end, focus: end, afterAnchor: after, afterFocus: after });
+  }
+
+  return { composing, focusEmpty, handlers: {
     onInput: (event: FormEvent<HTMLDivElement>) => { if (!(event.nativeEvent as InputEvent).isComposing) commit((event.nativeEvent as InputEvent).inputType); },
     onCompositionStart: () => { composing.current = true; beforeSelection.current = root.current ? readSelection(root.current) : undefined; },
     onCompositionEnd: () => { composing.current = false; commit('composition'); },

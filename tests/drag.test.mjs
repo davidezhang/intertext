@@ -250,17 +250,17 @@ test('cancelling a second-pill drag restores only its position', () => {
   assert.ok([first, second].every(node => !node.style.transform));
 });
 
-function mountEditor() {
+function mountEditor(initialText = 'One two three four', withPills = true) {
   const container = document.createElement('div'); document.body.append(container);
   let state;
   function Editor() {
-    const [text, setText] = useState('One two three four');
-    const [artifacts, setArtifacts] = useState([
+    const [text, setText] = useState(initialText);
+    const [artifacts, setArtifacts] = useState(withPills ? [
       { id: 'first', position: 1, artifact: { src: '/first.jpg', alt: 'First' } },
       { id: 'second', position: 3, artifact: { src: '/second.mp4', kind: 'video', alt: 'Second' } },
-    ]);
+    ] : []);
     state = { text, artifacts };
-    return createElement(InlineArtifactsText, { text, artifacts,
+    return createElement(InlineArtifactsText, { text, artifacts, 'aria-placeholder': 'Type something…',
       onTextChange: (value, positions) => { setText(value); setArtifacts(items => items.map(item => ({ ...item, position: positions[item.id] }))); },
       onPositionChange: (id, position) => setArtifacts(items => items.map(item => item.id === id ? { ...item, position } : item)),
     });
@@ -321,12 +321,80 @@ test('empty text remains editable and paste ignores rich formatting', () => {
   assert.equal(state().text, '');
   assert.equal(surface.hasAttribute('data-artifact-empty'), true);
   assert.deepEqual([...surface.querySelectorAll('artifact-pill')], pills);
+  assert.ok(surface.querySelector('[data-editor-empty-slot] > [data-editor-tail]'));
   selectDOM(surface, surface.childNodes.length);
   const paste = new window.Event('paste', { bubbles: true, cancelable: true });
   Object.defineProperty(paste, 'clipboardData', { value: { getData: type => type === 'text/plain' ? '<b>Plain</b>\ntext' : '<b>Styled</b>' } });
   act(() => surface.dispatchEvent(paste));
   assert.equal(state().text, '<b>Plain</b>\ntext');
   assert.equal(surface.querySelector('b'), null);
+});
+
+for (const withPills of [true, false]) {
+  test(`empty editor can be refocused and typed into ${withPills ? 'with' : 'without'} media`, () => {
+    const { state, pills } = mountEditor('', withPills);
+    const slot = surface.querySelector('[data-editor-empty-slot]');
+    assert.ok(slot);
+    assert.equal(surface.textContent, '', 'the placeholder is not editable text');
+    assert.equal(slot.dataset.placeholder, 'Type something…');
+    surface.blur(); window.getSelection().removeAllRanges();
+    act(() => slot.dispatchEvent(new window.MouseEvent('click', { bubbles: true })));
+    assert.ok(document.activeElement === surface, 'focus is restored inside the click, without a frame or timer');
+    assert.ok(window.getSelection().focusNode === slot);
+    assert.equal(window.getSelection().focusOffset, 0);
+    nativeEdit('Hello');
+    assert.equal(state().text, 'Hello');
+    assert.equal(surface.hasAttribute('data-artifact-empty'), false);
+    assert.equal(surface.querySelector('[data-editor-empty-slot]'), null);
+    assert.deepEqual([...surface.querySelectorAll('artifact-pill')], pills);
+    key('z', { ctrlKey: true });
+    assert.equal(state().text, '');
+    assert.ok(surface.querySelector('[data-editor-empty-slot]'));
+    nativeEdit('Again');
+    assert.equal(state().text, 'Again');
+  });
+}
+
+for (const filler of ['<br>', '&nbsp; ', '<div><br></div>', '\n \t']) {
+  test(`deleting the last words normalizes browser filler ${JSON.stringify(filler)}`, () => {
+    const { state, pills } = mountEditor();
+    selectDOM(surface, 0, surface, surface.childNodes.length);
+    act(() => surface.dispatchEvent(new window.InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType: 'deleteContentBackward' })));
+    const remainder = document.createElement('span'); remainder.innerHTML = filler;
+    // Browsers may retain non-editable siblings plus an invisible caret filler.
+    surface.replaceChildren(...pills, ...remainder.childNodes);
+    selectDOM(surface, surface.childNodes.length);
+    act(() => surface.dispatchEvent(new window.InputEvent('input', { bubbles: true, inputType: 'deleteContentBackward' })));
+    assert.equal(state().text, '');
+    assert.equal(surface.hasAttribute('data-artifact-empty'), true);
+    assert.deepEqual(state().artifacts.map(item => item.position), [0, 0]);
+    assert.ok(window.getSelection().focusNode === surface.querySelector('[data-editor-empty-slot]'));
+    key('z', { ctrlKey: true });
+    assert.equal(state().text, 'One two three four');
+    key('z', { ctrlKey: true, shiftKey: true });
+    assert.equal(state().text, '');
+    nativeEdit('New');
+    assert.equal(state().text, 'New');
+  });
+}
+
+test('intentional whitespace keeps its value while exposing an empty-state caret and hint', () => {
+  const { state } = mountEditor(' \n\t', false);
+  assert.equal(surface.hasAttribute('data-artifact-empty'), true);
+  act(() => surface.querySelector('[data-editor-empty-slot]').dispatchEvent(new window.MouseEvent('click', { bubbles: true })));
+  assert.ok(window.getSelection().focusNode === surface.querySelector('[data-editor-empty-slot]'));
+  nativeEdit('New');
+  assert.equal(state().text, ' \n\tNew');
+});
+
+test('an empty editor keeps the hint and usable caret after Enter', () => {
+  const { state } = mountEditor('', false);
+  act(() => surface.dispatchEvent(new window.InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType: 'insertParagraph' })));
+  assert.equal(state().text, '\n');
+  assert.equal(surface.hasAttribute('data-artifact-empty'), true);
+  assert.ok(window.getSelection().focusNode === surface.querySelector('[data-editor-empty-slot]'));
+  nativeEdit('Next line');
+  assert.equal(state().text, '\nNext line');
 });
 
 test('IME composition is committed only after composition ends', () => {

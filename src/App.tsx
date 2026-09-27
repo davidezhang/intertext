@@ -284,7 +284,7 @@ export default function App() {
     <main className="canvas" aria-label="Live component preview" onPointerDown={event => { if (!(event.target as HTMLElement).closest('artifact-pill')) { if (inspector) studioSounds.play('tick'); closeInspector(); } }}>
       <div className={`canvas-inner ${viewport}`}>
         <div ref={composition} className="composition" style={{ '--type-scale': fontSize / 100 } as CSSProperties}>
-          <InlineArtifactsText className="specimen" text={text} artifacts={artifacts} selectedId={selectedId}
+          <InlineArtifactsText className="specimen" aria-placeholder="Type something…" text={text} artifacts={artifacts} selectedId={selectedId}
             onTextChange={(value, positions) => { if (value !== text) studioSounds.play('tick'); updateText(value, positions); }}
             onPositionChange={(id, position) => { if (pills.find(pill => pill.id === id)?.position !== position) studioSounds.play('thump'); updatePill(id, { position }); }} onSelectArtifact={selectPill}
             onArtifactDragStart={id => { setSelectedId(id); setInspector(null); }} />

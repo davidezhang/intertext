@@ -95,6 +95,7 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
   const cancelRef = useRef<() => void>(() => {});
   const instructionsId = useId();
   const editable = Boolean(onTextChange);
+  const empty = !text.trim();
   const editor = useInlineEditing(root, text, Object.fromEntries(artifacts.map(item => [item.id, item.position])), onTextChange);
   const renderedChildren = useRef<ReactNode[]>([]);
   const tokens = text.match(/\S+\s*/gu) || [];
@@ -354,15 +355,22 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
     }
   }
 
-  if (editable && text.endsWith('\n')) children.push(<br key="editor-tail" data-editor-tail="" />);
+  if (editable && empty) {
+    // A real editable line gives WebKit a caret target even when only pills remain.
+    // The visual hint is CSS-only, so it never becomes copied or exported text.
+    children.push(<span key="editor-empty" data-editor-empty-slot="" data-placeholder={props['aria-placeholder']}
+      style={{ display: 'inline-block', position: 'relative', minWidth: '1ch', minHeight: '1em' }}><br data-editor-tail="" /></span>);
+  } else if (editable && text.endsWith('\n')) children.push(<br key="editor-tail" data-editor-tail="" />);
   if (!editor.composing.current) renderedChildren.current = [leadingSpace, ...children];
 
   return <>
     <div {...props} {...(editable ? editor.handlers : {})} ref={root}
       contentEditable={editable ? true : undefined} suppressContentEditableWarning={editable} spellCheck={false}
       role={editable ? 'textbox' : props.role} aria-label={editable ? (props['aria-label'] || 'Canvas text') : props['aria-label']} aria-multiline={editable ? true : undefined}
-      data-artifact-empty={editable && !text ? '' : undefined} data-artifact-text="" data-artifact-position={placements[0]?.position ?? 0} data-artifact-dragging={drag ? '' : undefined}
+      data-artifact-empty={editable && empty ? '' : undefined} data-artifact-text="" data-artifact-position={placements[0]?.position ?? 0} data-artifact-dragging={drag ? '' : undefined}
       style={{ ...props.style, cursor: drag ? 'grabbing' : props.style?.cursor, userSelect: pressed ? 'none' : props.style?.userSelect }}
+      onFocus={event => { props.onFocus?.(event); if (!event.defaultPrevented && event.target === event.currentTarget) editor.focusEmpty(); }}
+      onClick={event => { props.onClick?.(event); if (!event.defaultPrevented && (event.target as HTMLElement).closest('[data-editor-empty-slot]')) editor.focusEmpty(); }}
       onPointerMove={pointerMove} onPointerUp={event => { if (gesture.current?.pointer === event.pointerId) endGesture(true); }}
       onPointerCancel={event => { if (gesture.current?.pointer === event.pointerId) endGesture(false); }} onLostPointerCapture={event => { if (gesture.current?.pointer === event.pointerId) endGesture(false); }}>
       {renderedChildren.current}

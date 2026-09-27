@@ -17,6 +17,8 @@ On the current Codex machine, `./scripts/dev.sh` also works with the bundled Nod
 
 The canvas always fills the window. **Click the text to edit it in place.** Typing, selection, plain-text paste, line breaks, and undo/redo work directly on the canvas. Pills stay protected while you edit, and their placement follows the surrounding words. Remove pills through their settings. Escape leaves text editing.
 
+Deleting the last words clears leftover spaces and browser line-break fillers. An empty canvas shows **Type something…** with an editable caret target; tap the hint to resume typing, including when media pills remain. The hint is never included in copied text or exports.
+
 The icon-only sliders button opens **global settings**: Typography, Canvas, and Export. Typography controls type scale; there is no separate text field. Click a pill (or focus it and press Enter) to open its own Media, Shape, Motion, and placement settings in the same right-hand sidebar. Each pill has independent media, sizing, fitting, and animation. Escape or a click on the canvas closes settings. Keyboard shortcuts T, C, E open the corresponding global section when you are not editing text.
 
 The **+** button adds a pill at a random word boundary, preferring an unoccupied location. It brings the new pill into view and focuses it so it is ready to drag or move with the arrow keys. Dragging keeps settings closed. Remove a pill from its settings footer. Canvas contains dark/light backgrounds and fluid/375-pixel preview settings; Export includes every pill in the composition. Reset global settings restores the default text, type scale, dark mode, and fluid canvas without resetting individual pill designs.
