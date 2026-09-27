@@ -2,6 +2,14 @@
 
 A responsive image, GIF, or silent looping video that sits between words. The studio is a full-screen canvas that defaults to dark mode, with a single collapsible control sidebar. The reusable pill is a dependency-free **Web Component**; React bindings add controlled placement, pointer/touch dragging, and keyboard movement.
 
+## Free core and future composition packs
+
+The component, React bindings, and current studio are free and open source under the [MIT License](LICENSE), including for commercial projects. You may modify, distribute, and sell copies under MIT's terms; retain its copyright and permission notice. Code export is included in the free studio.
+
+The first planned paid offering is a separate, one-time-purchase collection of designed compositions, hero sections, and motion presets. Premium packs will be distributed separately with their own commercial licenses. No premium pack is currently available, and nothing in this repository requires a purchase. See the [product plan](https://github.com/davidezhang/intertext/blob/main/docs/business-model.md) for the intended scope.
+
+Third-party dependencies retain their own licenses. The demo photos, GIFs, videos, and posters in `public/media` are covered by their original Unsplash or Pexels licenses, not MIT; see [Demo asset credits](#demo-asset-credits) and the [media license notice](https://github.com/davidezhang/intertext/blob/main/public/media/LICENSE.md).
+
 ## Run the studio
 
 With Node 20.19+ or 22.12+ and pnpm:
@@ -31,7 +39,7 @@ Upload media stays in your browser using an object URL. URL media is fetched dir
 
 ## Any website: native HTML
 
-Copy `dist/lib/artifact-pill.js` into your project. It has no React, animation, or CSS dependencies, and importing it registers the element once.
+Copy `dist/lib/artifact-pill.js` and the accompanying `LICENSE` into your project, retaining the license alongside the component when distributing it. It has no React, animation, or CSS dependencies, and importing it registers the element once.
 
 ```html
 <script type="module" src="./artifact-pill.js"></script>
@@ -224,4 +232,4 @@ The studio's interaction and material refinements follow the [Apple design skill
 - **Concrete in motion (legacy asset)** — [Nuray on Pexels](https://www.pexels.com/video/elegant-brutalist-architecture-against-blue-sky-28883887/), under the [Pexels License](https://www.pexels.com/license/). An eight-second monochrome, silent architectural video excerpt, with a still poster.
 - **Shell chair** — [Resource Database on Unsplash](https://unsplash.com/photos/rZ1RPEom9gs), under the [Unsplash License](https://unsplash.com/license). A resized monochrome chair render from the creator's “Musical Chairs” series.
 
-The demo media is in `public/media` and is not included in the reusable library package.
+The demo media is in `public/media` and is not included in the reusable library package. These assets retain their original licenses and are excluded from the repository's MIT license; see the [media license notice](https://github.com/davidezhang/intertext/blob/main/public/media/LICENSE.md) for the file-by-file mapping.

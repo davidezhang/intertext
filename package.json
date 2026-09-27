@@ -2,6 +2,7 @@
   "name": "@design-components/artifact-pill",
   "version": "0.1.0",
   "description": "Responsive inline media pills for the web, with React bindings and draggable text composition.",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/davidezhang/intertext.git"
@@ -11,7 +12,8 @@
   "packageManager": "pnpm@10.11.1",
   "files": [
     "dist/lib",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "exports": {
     ".": {
