@@ -260,7 +260,7 @@ function mountEditor(initialText = 'One two three four', withPills = true) {
       { id: 'second', position: 3, artifact: { src: '/second.mp4', kind: 'video', alt: 'Second' } },
     ] : []);
     state = { text, artifacts };
-    return createElement(InlineArtifactsText, { text, artifacts, 'aria-placeholder': 'Type something…',
+    return createElement(InlineArtifactsText, { text, artifacts,
       onTextChange: (value, positions) => { setText(value); setArtifacts(items => items.map(item => ({ ...item, position: positions[item.id] }))); },
       onPositionChange: (id, position) => setArtifacts(items => items.map(item => item.id === id ? { ...item, position } : item)),
     });
@@ -333,10 +333,9 @@ test('empty text remains editable and paste ignores rich formatting', () => {
 for (const withPills of [true, false]) {
   test(`empty editor can be refocused and typed into ${withPills ? 'with' : 'without'} media`, () => {
     const { state, pills } = mountEditor('', withPills);
-    const slot = surface.querySelector('[data-editor-empty-slot]');
+    const slot = [...surface.querySelectorAll('[data-editor-empty-slot]')].at(-1);
     assert.ok(slot);
-    assert.equal(surface.textContent, '', 'the placeholder is not editable text');
-    assert.equal(slot.dataset.placeholder, 'Type something…');
+    assert.equal(surface.textContent, '', 'caret targets contain no placeholder or invisible text');
     surface.blur(); window.getSelection().removeAllRanges();
     act(() => slot.dispatchEvent(new window.MouseEvent('click', { bubbles: true })));
     assert.ok(document.activeElement === surface, 'focus is restored inside the click, without a frame or timer');
@@ -355,6 +354,41 @@ for (const withPills of [true, false]) {
   });
 }
 
+for (const [index, side, positions] of [[0, 'before', [2, 2]], [1, 'between', [0, 2]], [2, 'after', [0, 0]]]) {
+  test(`empty editor inserts ${side} pills and retains that position through undo`, () => {
+    const { state, pills } = mountEditor('');
+    const media = pills.map(pill => pill.shadowRoot.querySelector('img,video'));
+    const slots = [...surface.querySelectorAll('[data-editor-empty-slot]')];
+    surface.blur(); window.getSelection().removeAllRanges();
+    act(() => slots[index].dispatchEvent(new window.MouseEvent('click', { bubbles: true })));
+    assert.ok(document.activeElement === surface);
+    assert.ok(window.getSelection().focusNode === slots[index]);
+    nativeEdit('Hello');
+    nativeEdit(' world');
+    assert.equal(state().text, 'Hello world');
+    assert.deepEqual(state().artifacts.map(item => item.position), positions);
+    assert.deepEqual(pills.map(pill => pill.shadowRoot.querySelector('img,video')), media);
+    key('z', { ctrlKey: true });
+    assert.equal(state().text, '');
+    assert.ok(window.getSelection().focusNode === surface.querySelectorAll('[data-editor-empty-slot]')[index]);
+    nativeEdit('Again here');
+    assert.equal(state().text, 'Again here');
+    assert.deepEqual(state().artifacts.map(item => item.position), positions);
+  });
+}
+
+test('clicking blank canvas space chooses the nearest empty insertion gap', () => {
+  const { state } = mountEditor('');
+  const slots = [...surface.querySelectorAll('[data-editor-empty-slot]')];
+  slots.forEach((slot, index) => { slot.getBoundingClientRect = () => ({ left: index * 100, right: index * 100 + 12, top: 0, bottom: 40 }); });
+  surface.blur(); window.getSelection().removeAllRanges();
+  act(() => surface.dispatchEvent(new window.MouseEvent('click', { bubbles: true, clientX: 300, clientY: 20 })));
+  assert.ok(window.getSelection().focusNode === slots[2]);
+  nativeEdit('After');
+  assert.equal(state().text, 'After');
+  assert.deepEqual(state().artifacts.map(item => item.position), [0, 0]);
+});
+
 for (const filler of ['<br>', '&nbsp; ', '<div><br></div>', '\n \t']) {
   test(`deleting the last words normalizes browser filler ${JSON.stringify(filler)}`, () => {
     const { state, pills } = mountEditor();
@@ -368,7 +402,7 @@ for (const filler of ['<br>', '&nbsp; ', '<div><br></div>', '\n \t']) {
     assert.equal(state().text, '');
     assert.equal(surface.hasAttribute('data-artifact-empty'), true);
     assert.deepEqual(state().artifacts.map(item => item.position), [0, 0]);
-    assert.ok(window.getSelection().focusNode === surface.querySelector('[data-editor-empty-slot]'));
+    assert.ok(window.getSelection().focusNode === [...surface.querySelectorAll('[data-editor-empty-slot]')].at(-1));
     key('z', { ctrlKey: true });
     assert.equal(state().text, 'One two three four');
     key('z', { ctrlKey: true, shiftKey: true });
@@ -378,7 +412,7 @@ for (const filler of ['<br>', '&nbsp; ', '<div><br></div>', '\n \t']) {
   });
 }
 
-test('intentional whitespace keeps its value while exposing an empty-state caret and hint', () => {
+test('intentional whitespace keeps its value while exposing an empty-state caret', () => {
   const { state } = mountEditor(' \n\t', false);
   assert.equal(surface.hasAttribute('data-artifact-empty'), true);
   act(() => surface.querySelector('[data-editor-empty-slot]').dispatchEvent(new window.MouseEvent('click', { bubbles: true })));
@@ -387,7 +421,7 @@ test('intentional whitespace keeps its value while exposing an empty-state caret
   assert.equal(state().text, ' \n\tNew');
 });
 
-test('an empty editor keeps the hint and usable caret after Enter', () => {
+test('an empty editor keeps a usable caret after Enter', () => {
   const { state } = mountEditor('', false);
   act(() => surface.dispatchEvent(new window.InputEvent('beforeinput', { bubbles: true, cancelable: true, inputType: 'insertParagraph' })));
   assert.equal(state().text, '\n');

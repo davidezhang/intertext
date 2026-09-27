@@ -67,7 +67,14 @@ export function readSelection(root: HTMLElement): TextSelection | undefined {
 export function restoreSelection(root: HTMLElement, bookmark: TextSelection) {
   const document = root.ownerDocument;
   function point(wanted: number, after: string[]): [Node, number] {
-    const tail = root.querySelector('[data-editor-tail]');
+    // Empty text gives every pill the same text offset; preserve its exact side.
+    for (const slot of root.querySelectorAll<HTMLElement>('[data-editor-empty-slot]')) {
+      const range = document.createRange(); range.setStart(root, 0); range.setEndBefore(slot);
+      const prefix = readDOM(range.cloneContents());
+      const ids = Object.keys(prefix.offsets);
+      if (prefix.text.length === wanted && ids.length === after.length && ids.every(id => after.includes(id))) return [slot, 0];
+    }
+    const tail = Array.from(root.children).find(child => child.hasAttribute('data-editor-tail'));
     if (tail && wanted === readDOM(root).text.length) return [tail.parentNode!, Array.prototype.indexOf.call(tail.parentNode!.childNodes, tail)];
     let count = 0;
     let result: [Node, number] = [root, root.childNodes.length];

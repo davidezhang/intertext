@@ -111,14 +111,25 @@ export function useInlineEditing(root: RefObject<HTMLDivElement | null>, text: s
     if (cut) replaceSelection('', 'deleteByCut');
   }
 
-  function focusEmpty() {
+  function focusEmpty(event?: { target: EventTarget; clientX: number; clientY: number }) {
     const element = root.current;
     if (!element || !onChange || current.current.text.trim() || composing.current) return;
+    const slots = Array.from(element.querySelectorAll<HTMLElement>('[data-editor-empty-slot]'));
+    let slot = (event?.target as HTMLElement | undefined)?.closest<HTMLElement>('[data-editor-empty-slot]');
+    if (!slot && event) {
+      // Blank canvas space selects the nearest insertion gap, including wrapped rows.
+      const distance = (target: HTMLElement) => {
+        const box = target.getBoundingClientRect();
+        const dx = Math.max(box.left - event.clientX, 0, event.clientX - box.right);
+        const dy = Math.max(box.top - event.clientY, 0, event.clientY - box.bottom);
+        return dx * dx + dy * dy;
+      };
+      slot = slots.reduce<HTMLElement | undefined>((nearest, candidate) => !nearest || distance(candidate) < distance(nearest) ? candidate : nearest, undefined);
+    }
+    slot ||= slots.at(-1);
     // Keep focus inside the tap/click gesture so iOS can show its keyboard.
     element.focus({ preventScroll: true });
-    const end = current.current.text.length;
-    const after = Object.keys(current.current.positions);
-    restoreSelection(element, { anchor: end, focus: end, afterAnchor: after, afterFocus: after });
+    if (slot) element.ownerDocument.getSelection()?.setBaseAndExtent(slot, 0, slot, 0);
   }
 
   return { composing, focusEmpty, handlers: {

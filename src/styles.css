@@ -165,8 +165,6 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 @media(prefers-reduced-motion:reduce){.toolbar-button:active{transform:none}}
 
 .specimen[contenteditable=true]{cursor:text;caret-color:var(--fg);outline:none;min-height:1.2em}
-.specimen [data-editor-empty-slot]{width:100%}
-.specimen [data-editor-empty-slot]::before{content:attr(data-placeholder);position:absolute;inset:0;color:var(--muted);pointer-events:none;user-select:none;white-space:nowrap;letter-spacing:inherit}
 .specimen[contenteditable=true]::selection,.specimen[contenteditable=true] ::selection{background:var(--fg);color:var(--bg)}
 
 /* DialKit controls share the existing sidebar, theme, and scrolling surface. */

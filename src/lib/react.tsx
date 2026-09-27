@@ -326,7 +326,7 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
       data-artifact-id={id} data-artifact-position={item.position}
       data-artifact-selected={selectedId === id ? '' : undefined}
       data-artifact-dragging={activeDrag ? '' : undefined}
-      style={{ ...artifact.style, marginInlineEnd: editable ? '.22em' : undefined, marginInlineStart: editable && item.position === tokens.length && text && !/\s$/u.test(text) ? '.22em' : undefined, cursor: movable ? (isPressed ? 'grabbing' : 'grab') : onSelectArtifact ? 'pointer' : undefined,
+      style={{ ...artifact.style, marginInlineEnd: editable && !empty ? '.22em' : undefined, marginInlineStart: editable && item.position === tokens.length && text && !/\s$/u.test(text) ? '.22em' : undefined, cursor: movable ? (isPressed ? 'grabbing' : 'grab') : onSelectArtifact ? 'pointer' : undefined,
         touchAction: movable ? 'none' : undefined, userSelect: movable ? 'none' : undefined,
         zIndex: activeDrag ? 10 : undefined, opacity: isPressed && !activeDrag ? .82 : 1,
         boxShadow: activeDrag ? '0 12px 32px #0005, 0 2px 8px #0003' : undefined }}
@@ -341,11 +341,16 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
       }} />;
   }
 
-  const children: ReactNode[] = [];
+  // Real, blank caret targets let WebKit edit either side of non-editable media.
+  // They stay inline and add only a small gap, with no placeholder or extra row.
+  const emptySlot = (key: string) => <span key={`editor-empty-${key}`} data-editor-empty-slot=""
+    style={{ display: 'inline-block', minWidth: 'max(.22em, 12px)', minHeight: '1em' }}><br data-editor-tail="" /></span>;
+  const children: ReactNode[] = editable && empty ? [emptySlot('start')] : [];
   for (let index = 0; index <= tokens.length; index++) {
     const items = placements.filter(item => item.position === index);
     items.forEach((item, offset) => {
       children.push(artifactNode(item));
+      if (editable && empty) children.push(emptySlot(`after-${item.id}`));
       if (!editable && (index < tokens.length || offset < items.length - 1)) children.push(<span key={`after-${item.id}`}> </span>);
     });
     if (index < tokens.length) {
@@ -355,13 +360,7 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
     }
   }
 
-  if (editable && empty) {
-    // A real editable line gives WebKit a caret target even when only pills remain.
-    // Keep it on its own row so expanding a pill cannot wrap the hint and toggle hover.
-    // The visual hint is CSS-only, so it never becomes copied or exported text.
-    children.push(<span key="editor-empty" data-editor-empty-slot="" data-placeholder={props['aria-placeholder']}
-      style={{ display: 'block', position: 'relative', minWidth: '1ch', minHeight: '1em' }}><br data-editor-tail="" /></span>);
-  } else if (editable && text.endsWith('\n')) children.push(<br key="editor-tail" data-editor-tail="" />);
+  if (editable && !empty && text.endsWith('\n')) children.push(<br key="editor-tail" data-editor-tail="" />);
   if (!editor.composing.current) renderedChildren.current = [leadingSpace, ...children];
 
   return <>
@@ -371,7 +370,7 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
       data-artifact-empty={editable && empty ? '' : undefined} data-artifact-text="" data-artifact-position={placements[0]?.position ?? 0} data-artifact-dragging={drag ? '' : undefined}
       style={{ ...props.style, cursor: drag ? 'grabbing' : props.style?.cursor, userSelect: pressed ? 'none' : props.style?.userSelect }}
       onFocus={event => { props.onFocus?.(event); if (!event.defaultPrevented && event.target === event.currentTarget) editor.focusEmpty(); }}
-      onClick={event => { props.onClick?.(event); if (!event.defaultPrevented && (event.target as HTMLElement).closest('[data-editor-empty-slot]')) editor.focusEmpty(); }}
+      onClick={event => { props.onClick?.(event); if (!event.defaultPrevented && !(event.target as HTMLElement).closest('artifact-pill')) editor.focusEmpty(event); }}
       onPointerMove={pointerMove} onPointerUp={event => { if (gesture.current?.pointer === event.pointerId) endGesture(true); }}
       onPointerCancel={event => { if (gesture.current?.pointer === event.pointerId) endGesture(false); }} onLostPointerCapture={event => { if (gesture.current?.pointer === event.pointerId) endGesture(false); }}>
       {renderedChildren.current}
