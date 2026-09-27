@@ -1,4 +1,6 @@
 /** A dependency-free inline image, GIF, or video. Import once to register <artifact-pill>. */
+import { connectPillHover } from './pill-hover.js';
+
 export type MediaFit = 'crop' | 'fit' | 'fill';
 export type MediaKind = 'image' | 'gif' | 'video';
 
@@ -13,7 +15,7 @@ const styles = `
     transition-duration: var(--artifact-duration, 500ms);
     transition-timing-function: var(--artifact-easing, cubic-bezier(.22, 1, .36, 1));
   }
-  :host([expanded]), :host([hover-expand]:hover), :host([hover-expand]:focus-visible) {
+  :host([expanded]), :host([hover-expand][data-hover-active]), :host([hover-expand]:focus-visible) {
     width: var(--artifact-expanded-width, 4.2em); height: var(--artifact-expanded-height, 1.25em);
   }
   :host(:focus-visible) { outline: 2px solid var(--artifact-focus, #000); outline-offset: 4px; }
@@ -28,10 +30,11 @@ const styles = `
 const BaseElement = (typeof HTMLElement === 'undefined' ? class {} : HTMLElement) as typeof HTMLElement;
 
 export class ArtifactPillElement extends BaseElement {
-  static observedAttributes = ['src', 'kind', 'alt', 'fit', 'position', 'poster', 'paused', 'width', 'height', 'radius', 'duration', 'easing', 'expanded-width', 'expanded-height'];
+  static observedAttributes = ['src', 'kind', 'alt', 'fit', 'position', 'poster', 'paused', 'width', 'height', 'radius', 'duration', 'easing', 'expanded-width', 'expanded-height', 'hover-expand'];
   private media?: HTMLImageElement | HTMLVideoElement;
   private fallback?: HTMLSpanElement;
   private motionQuery?: MediaQueryList;
+  private hover?: ReturnType<typeof connectPillHover>;
   private managedProperties = new Set<string>();
   private onMotionChange = () => this.syncPlayback();
 
@@ -44,17 +47,23 @@ export class ArtifactPillElement extends BaseElement {
   }
 
   connectedCallback() {
+    this.hover = connectPillHover(this);
     this.motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
     this.motionQuery.addEventListener('change', this.onMotionChange);
     this.update();
   }
 
   disconnectedCallback() {
+    this.hover?.disconnect();
+    this.hover = undefined;
     this.motionQuery?.removeEventListener('change', this.onMotionChange);
     if (this.media instanceof HTMLVideoElement) this.media.pause();
   }
 
-  attributeChangedCallback() { if (this.isConnected) this.update(); }
+  attributeChangedCallback(name: string) {
+    if (name === 'hover-expand') this.hover?.update();
+    else if (this.isConnected) this.update();
+  }
 
   private update() {
     const kind = this.getAttribute('kind') || 'image';
