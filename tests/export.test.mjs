@@ -275,7 +275,7 @@ test('generated HTML audio controls play, pause, reflect ended state and announc
 
 test('React media exports compile with visible controls and versioned download install instructions', async () => {
   const code = generateExport(makeInput({ artifacts: [{ id: 'a', position: 1, artifact: { src: '/media/sound.m4a', alt: 'Music', kind: 'audio' } }] }), 'react');
-  assert.match(code, /npm install https:\/\/intertext\.dev\/releases\/0\.1\.0\/intertext-dev-0\.1\.0\.tgz/);
+  assert.match(code, /npm install intertext-dev@0\.1\.0/);
   assert.match(code, /onClick=\{\(\) => void togglePlayback/);
   assert.match(code, /paused=\{true\}/);
   assert.match(code, /aria-live="polite"/);

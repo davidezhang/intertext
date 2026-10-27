@@ -4,7 +4,7 @@ Intertext adds images, GIFs, silent video, and audio waveforms between words. A 
 
 ## Choose an integration
 
-**intertext-dev 0.1.0** is distributed directly from intertext.dev. Use the skill with a coding agent, import the browser module in HTML, or install the package archive in a React project. An npm registry release is still pending; these website downloads do not require an npm account.
+**intertext-dev 0.1.0** is available on [npm](https://www.npmjs.com/package/intertext-dev) and as a versioned website download. Use the skill with a coding agent, import the browser module in HTML, or install the package in a React project. You do not need an account to install or use Intertext.
 
 The skill is discovered from the website’s `/.well-known/agent-skills/` endpoint. Installing it gives an agent integration instructions; it does not add the runtime to your site automatically.
 
@@ -50,10 +50,10 @@ Replace the media path with a file in your project. For self-hosting, download t
 
 ## React and Next.js
 
-Install the downloadable package:
+Install the package:
 
 ```sh
-npm install https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz
+npm install intertext-dev
 ```
 
 If you have a local source checkout, you can instead install its built archive:
@@ -62,7 +62,7 @@ If you have a local source checkout, you can instead install its built archive:
 npm install /absolute/path/to/intertext/public/releases/0.1.0/intertext-dev-0.1.0.tgz
 ```
 
-Use your project's package manager and retain the lockfile. Do not install `intertext`: that name belongs to an unrelated package. The short command `npm install intertext-dev` will be appropriate only after an npm release.
+Use your project's package manager and retain the lockfile. The same package is also available as a [versioned archive](https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz). Do not install `intertext`: that name belongs to an unrelated package.
 
 ```tsx
 import { ArtifactPill } from 'intertext-dev/react';

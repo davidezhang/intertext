@@ -1,6 +1,6 @@
 # Release Intertext
 
-Maintainer guide for Intertext releases. The public package identity is `intertext-dev`. Version 0.1.0 was deployed to `https://intertext.dev` on October 26, 2026 (Cloudflare version `f0c12023-df94-4bf9-9177-58027e0a187a`). An npm publication has not been performed.
+Maintainer guide for Intertext releases. The public package identity is `intertext-dev`. Version 0.1.0 was deployed to `https://intertext.dev` and published to npm by `davidezhang` on October 26, 2026. The npm tarball and frozen website package are identical.
 
 ## Build and verify locally
 
@@ -36,7 +36,7 @@ Deploy the complete `dist/site` output to make the versioned website install URL
 
 If recovering a release that was already published, retrieve its actual public files and verify them against its deployed manifest before freezing them. Do not substitute a local rebuild. Never remove a published snapshot when creating a new version.
 
-## Optional npm publication
+## npm publication
 
 Authenticate as the intended npm publisher, confirm ownership/availability of `intertext-dev`, and inspect the frozen package. Publish the archive itself with public access; do not run bare `npm publish`, which would repack the current source directory:
 

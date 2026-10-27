@@ -4,7 +4,7 @@ import { createIntegrationPrompt, downloadComposition, generateExport, type Expo
 
 type Route = 'ai' | 'react' | 'html';
 const skillCommand = 'npx skills add https://intertext.dev';
-const packageCommand = 'npm install https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz';
+const packageCommand = 'npm install intertext-dev';
 
 export function IntegrationPanel({ open, onClose, composition }: {
   open: boolean;

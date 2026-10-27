@@ -2,13 +2,13 @@
 
 ## Installation
 
-The canonical package is `intertext-dev`; its React entry is `intertext-dev/react`. The short npm install command is not available until that package is published to npm. The versioned website release is the first distribution route:
+The canonical npm package is `intertext-dev`; its React entry is `intertext-dev/react`. This reference describes version 0.1.0:
 
 ```sh
-npm install https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz
+npm install intertext-dev@0.1.0
 ```
 
-Use the destination's package manager. If the URL is unavailable, report that rather than claiming installation succeeded; a studio download kit also includes the local runtime or package. For an existing authorized source checkout, build it and install the generated `public/releases/0.1.0/intertext-dev-0.1.0.tgz` by absolute path. Do not install the unrelated `intertext` package.
+Use the destination's package manager and retain its lockfile. The identical archive is available at https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz, and studio download kits include the local runtime or package. Report failed installations rather than claiming success. For a source checkout, build it and install the generated archive by absolute path. Do not install the unrelated `intertext` package.
 
 Plain HTML needs only the browser module, with no React or external CSS:
 

@@ -16,7 +16,7 @@ npx skills add https://intertext.dev
 
 Then ask your agent to add Intertext inline media to your existing page. The skill handles integration guidance; the website uses the component below. See the [hosted skill instructions](https://intertext.dev/.well-known/agent-skills/intertext/SKILL.md). No repository access is required.
 
-**Distribution:** the website provides `intertext-dev@0.1.0` directly through a versioned download. It has not been published to the npm registry.
+**Distribution:** [intertext-dev](https://www.npmjs.com/package/intertext-dev) is available on npm. The website also provides the same `0.1.0` package through an immutable versioned download.
 
 ## Free core and future composition packs
 
@@ -84,10 +84,10 @@ The [plain HTML example](https://intertext.dev/examples/plain-html.html) uses on
 
 ## React
 
-The package name is `intertext-dev`. Install its versioned archive:
+Install the package:
 
 ```sh
-npm install https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz
+npm install intertext-dev
 ```
 
 For maintainers with a local source checkout:
@@ -98,7 +98,7 @@ pnpm build:release
 pnpm add /absolute/path/to/intertext/public/releases/0.1.0/intertext-dev-0.1.0.tgz
 ```
 
-Use your project's package manager. This is not yet an npm registry release; `npm install intertext-dev` is not advertised until publication is verified. The npm package named `intertext` is unrelated.
+Use your project's package manager and retain the lockfile. You can also install the [versioned website archive](https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz). The npm package named `intertext` is unrelated.
 
 React and React DOM are optional peers, required only by the React entry point. The package includes TypeScript declarations. The React bundle preserves `use client` for frameworks using React Server Components. Browser registration occurs in the client bundle; imports are safe during server rendering.
 
