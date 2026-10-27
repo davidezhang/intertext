@@ -1,5 +1,5 @@
 {
-  "name": "@design-components/artifact-pill",
+  "name": "intertext-dev",
   "version": "0.1.0",
   "description": "Responsive inline media pills for the web, with React bindings and draggable text composition.",
   "license": "MIT",
@@ -8,7 +8,10 @@
     "url": "https://github.com/davidezhang/intertext.git"
   },
   "type": "module",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["intertext", "inline-media", "interactive-text", "web-components", "react"],
   "packageManager": "pnpm@10.11.1",
   "files": [
     "dist/lib",
@@ -26,10 +29,15 @@
     }
   },
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build && vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
+    "dev": "npm run build:release && vite --host 127.0.0.1",
+    "build:lib": "vite build --config vite.lib.config.ts && vite build --config vite.lib.config.ts --mode react && tsc -p tsconfig.lib.json",
+    "build:release": "npm run build:lib && node scripts/prepare-release.mjs",
+    "build": "tsc --noEmit && npm run build:release && vite build",
+    "prepack": "npm run build:lib",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "test:package": "node scripts/smoke-package.mjs",
+    "check:release": "npm run build && npm test && npm run test:package"
   },
   "peerDependencies": {
     "react": ">=18",

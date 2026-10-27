@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A responsive Intertext product story with inline object photography and a keyboard-accessible detail toggle.">
+  <title>Product story — Intertext example</title>
+  <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
+  <style>
+    :root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; color: #292b27; background: #efeee8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: inherit; text-underline-offset: .3em; }
+    a:focus-visible, button:focus-visible { outline: 2px solid #41634e; outline-offset: 6px; }
+    header, main, footer { width: min(100% - 3rem, 1200px); margin-inline: auto; }
+    header { display: flex; justify-content: space-between; gap: 1.5rem; padding-block: 2rem; font-size: .8rem; }
+    .brand { letter-spacing: .18em; text-decoration: none; }
+    .hero { padding-block: clamp(4rem, 10vw, 8rem) 5rem; }
+    .eyebrow { font-size: .7rem; letter-spacing: .13em; text-transform: uppercase; color: #6d7267; }
+    h1 { max-width: 17ch; margin: 1.2rem 0 2rem; font-size: clamp(3rem, 7.5vw, 7.25rem); font-weight: 400; line-height: 1.06; letter-spacing: -.06em; }
+    artifact-pill { --artifact-background: #e2e1da; --artifact-align: -.06em; }
+    .description { max-width: 34rem; line-height: 1.65; color: #62685b; font-size: 1.1rem; }
+    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-top: 2rem; font-size: .8rem; }
+    button { font: inherit; color: inherit; border: 1px solid #92998a; background: transparent; border-radius: 999px; padding: .85rem 1.3rem; cursor: pointer; }
+    button:hover { background: #e0e3d8; }
+    .details { border-top: 1px solid #babfb1; padding-block: 2.5rem 5rem; display: grid; grid-template-columns: 1fr 1.3fr; gap: 3rem; }
+    h2 { margin: 0; font-size: .75rem; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; }
+    .details h3 { font-size: 1.5rem; font-weight: 400; margin: 0 0 .75rem; }
+    .details p { max-width: 33rem; line-height: 1.6; color: #62685b; }
+    footer { border-top: 1px solid #babfb1; padding-block: 1.5rem; color: #62685b; font-size: .75rem; line-height: 1.7; }
+    @media (max-width: 540px) { header, main, footer { width: calc(100% - 2rem); } h1 { font-size: clamp(2.7rem, 11vw, 4rem); } .details { grid-template-columns: 1fr; gap: 1.5rem; } }
+  </style>
+</head>
+<body>
+  <header><a href="#story" class="brand">FORM</a><a href="#details">Object notes</a></header>
+  <main>
+    <section class="hero" id="story" aria-labelledby="product-title">
+      <p class="eyebrow">An object study / No. 01</p>
+      <h1 id="product-title">A little more <artifact-pill id="chair" src="../media/shell-chair.jpg" alt="Sculptural shell chair in a monochrome studio setting" width="2.2em" height=".85em" expanded-width="3.2em" expanded-height="1.4em" radius="999px" fit="crop" duration="550ms"></artifact-pill> room to pause.</h1>
+      <p class="description">An exploration of everyday objects and the space around them. Soft silhouettes, simple gestures, and a moment to sit with something familiar.</p>
+      <div class="actions"><button id="detail-toggle" type="button" aria-controls="chair" aria-pressed="false" hidden>Enlarge the image</button><a href="#details">Read the object notes</a></div>
+    </section>
+    <section class="details" id="details" aria-labelledby="details-title">
+      <h2 id="details-title">Designed into the sentence</h2>
+      <div><h3>Let the object tell part of the story.</h3><p>The image lives in the same line as the words. Its proportions follow the type, while the surrounding sentence wraps naturally as the page becomes narrower.</p><p>Use this composition for a product introduction, a collection story, or an object-led campaign. The detail control works with a mouse, keyboard, or touch.</p></div>
+    </section>
+  </main>
+  <footer>Intertext product starter · Illustrative concept, not a product for sale. <a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></footer>
+  <script type="module">
+    await customElements.whenDefined('artifact-pill');
+    const pill = document.querySelector('#chair');
+    const button = document.querySelector('#detail-toggle');
+    button.hidden = false;
+    button.addEventListener('click', () => {
+      const expanded = pill.toggleAttribute('expanded');
+      button.setAttribute('aria-pressed', String(expanded));
+      button.textContent = expanded ? 'Restore the image size' : 'Enlarge the image';
+    });
+  </script>
+</body>
+</html>
