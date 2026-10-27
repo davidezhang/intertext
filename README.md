@@ -1,27 +1,47 @@
 # Intertext
 
-A responsive image, GIF, audio waveform, or silent looping video that sits between words. The studio is a full-screen canvas that defaults to dark mode, with a single collapsible control sidebar. The reusable pill is a dependency-free **Web Component**; React bindings add controlled placement, pointer/touch dragging, and keyboard movement.
+[Try the studio](https://intertext.dev) · [Integration guide](https://intertext.dev/docs/integration.md) · [Report an issue](https://github.com/davidezhang/intertext/issues)
+
+A responsive image, GIF, audio waveform, or silent looping video that sits between words. The studio is a full-screen canvas that defaults to dark mode, with a single collapsible control sidebar. The reusable pill is a dependency-free **Web Component**; React bindings support semantic static compositions, with separate opt-in placement and editing controls.
+
+## Add it to your website
+
+Start with the [integration guide](https://intertext.dev/docs/integration.md). It includes native HTML, React/Next.js, media handling, and complete [portfolio](https://intertext.dev/examples/portfolio.html), [product](https://intertext.dev/examples/product.html), and [editorial](https://intertext.dev/examples/editorial.html) recipes. Normal website compositions use real headings and paragraphs with static pills; dragging is for editing experiences.
+
+Install the Intertext skill from your website project:
+
+```sh
+npx skills add https://intertext.dev
+```
+
+Then ask your agent to add Intertext inline media to your existing page. The skill handles integration guidance; the website uses the component below. See the [hosted skill instructions](https://intertext.dev/.well-known/agent-skills/intertext/SKILL.md). No repository access is required.
+
+**Distribution:** [intertext-dev](https://www.npmjs.com/package/intertext-dev) is available on npm. The website also provides the same `0.1.0` package through an immutable versioned download.
 
 ## Free core and future composition packs
 
-The component, React bindings, and current studio are free and open source under the [MIT License](LICENSE), including for commercial projects. You may modify, distribute, and sell copies under MIT's terms; retain its copyright and permission notice. Code export is included in the free studio.
+The component, React bindings, and current studio are free under the [MIT License](LICENSE), including for commercial projects. You may modify, distribute, and sell copies under MIT's terms; retain its copyright and permission notice. Code export is included in the free studio.
 
-The first planned paid offering is a separate, one-time-purchase collection of designed compositions, hero sections, and motion presets. Premium packs will be distributed separately with their own commercial licenses. No premium pack is currently available, and nothing in this repository requires a purchase. See the [product plan](https://github.com/davidezhang/intertext/blob/main/docs/business-model.md) for the intended scope.
+The first planned paid offering is a separate, one-time-purchase collection of designed compositions, hero sections, and motion presets. Premium packs will be distributed separately with their own commercial licenses. No premium pack is currently available, and nothing in this repository requires a purchase.
 
-Third-party dependencies retain their own licenses. The demo photos, GIFs, videos, and posters in `public/media` are covered by their original Unsplash or Pexels licenses, not MIT; see [Demo asset credits](#demo-asset-credits) and the [media license notice](https://github.com/davidezhang/intertext/blob/main/public/media/LICENSE.md).
+Third-party dependencies retain their own licenses. The demo photos, GIFs, videos, and posters in `public/media` are covered by their original Unsplash or Pexels licenses, not MIT; see [Demo asset credits](#demo-asset-credits) and the [media license notice](https://intertext.dev/media/LICENSE.md).
+
+Instrument Serif in `public/fonts` is licensed under the [SIL Open Font License](public/fonts/InstrumentSerif-OFL.txt). Its license is included when exporting a composition that uses it.
 
 ## Run the studio
 
-With Node 20.19+ or 22.12+ and pnpm:
+Use Node 20.19+ or 22.12+ and the pnpm version declared in `package.json`:
 
 ```sh
+git clone https://github.com/davidezhang/intertext.git
+cd intertext
 pnpm install
 pnpm dev
 ```
 
-Open the local URL printed by Vite. `pnpm build` builds both the studio (`dist/site`) and the reusable library (`dist/lib`). `pnpm test` runs package, SSR, and drag interaction checks after building.
+Open the local URL printed by Vite. `pnpm dev` first prepares the reusable release and examples. `pnpm build` builds the studio (`dist/site`) and reusable library (`dist/lib`), including versioned downloads under `public/releases/0.1.0`. `pnpm build:release` builds only the reusable release and example assets. `pnpm check:release` runs the full build, test suite, and a clean-consumer package/SSR smoke check; `pnpm test` runs the tests against an existing build.
 
-On the current Codex machine, `./scripts/dev.sh` also works with the bundled Node runtime when Node is missing from PATH.
+For bug reports and contributions, see [CONTRIBUTING.md](CONTRIBUTING.md). Include a minimal reproduction and the browser/framework you used when reporting an integration problem.
 
 The canvas always fills the window. **Click the text to edit it in place.** Typing, selection, plain-text paste, line breaks, and undo/redo work directly on the canvas. Pills stay protected while you edit, and their placement follows the surrounding words. Remove pills through their settings. Escape leaves text editing.
 
@@ -39,10 +59,10 @@ Upload media stays in your browser using an object URL. URL media is fetched dir
 
 ## Any website: native HTML
 
-Copy `dist/lib/artifact-pill.js` and the accompanying `LICENSE` into your project, retaining the license alongside the component when distributing it. It has no React, animation, or CSS dependencies, and importing it registers the element once.
+Load `https://intertext.dev/releases/0.1.0/artifact-pill.js` directly. For self-hosting, copy the generated `public/releases/0.1.0/artifact-pill.js` and its `LICENSE` into your project, retaining the MIT notice. The module has no React, animation, or CSS dependencies, and importing it registers the element once. Maintainers can also use locally built files.
 
 ```html
-<script type="module" src="./artifact-pill.js"></script>
+<script type="module" src="https://intertext.dev/releases/0.1.0/artifact-pill.js"></script>
 
 <h1 style="font-size: clamp(2rem, 7vw, 8rem); line-height: 1.2">
   Designing
@@ -53,7 +73,6 @@ Copy `dist/lib/artifact-pill.js` and the accompanying `LICENSE` into your projec
     height="0.85em"
     radius="999px"
     fit="crop"
-    hover-expand
     expanded-width="4.5em"
     expanded-height="1.1em"
   ></artifact-pill>
@@ -61,25 +80,32 @@ Copy `dist/lib/artifact-pill.js` and the accompanying `LICENSE` into your projec
 </h1>
 ```
 
-Open [examples/plain-html.html](examples/plain-html.html) through the dev server after building for an example using only HTML and the compiled element. The same custom element can be used from Vue, Svelte, or another framework. Follow that framework's custom-element configuration if needed.
+The [plain HTML example](https://intertext.dev/examples/plain-html.html) uses only HTML and the compiled element. Maintainers can also open `examples/plain-html.html` through the dev server after building. The same custom element can be used from Vue, Svelte, or another framework. Follow that framework's custom-element configuration if needed.
 
 ## React
 
-This is a local package, not a published npm release. Build and pack it first:
+Install the package:
 
 ```sh
-pnpm build
-pnpm pack
-# From the consuming React project:
-pnpm add /absolute/path/to/design-components-artifact-pill-0.1.0.tgz
+npm install intertext-dev
 ```
+
+For maintainers with a local source checkout:
+
+```sh
+pnpm build:release
+# From the consuming React project:
+pnpm add /absolute/path/to/intertext/public/releases/0.1.0/intertext-dev-0.1.0.tgz
+```
+
+Use your project's package manager and retain the lockfile. You can also install the [versioned website archive](https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz). The npm package named `intertext` is unrelated.
 
 React and React DOM are optional peers, required only by the React entry point. The package includes TypeScript declarations. The React bundle preserves `use client` for frameworks using React Server Components. Browser registration occurs in the client bundle; imports are safe during server rendering.
 
 For a static inline pill:
 
 ```tsx
-import { ArtifactPill } from '@design-components/artifact-pill/react';
+import { ArtifactPill } from 'intertext-dev/react';
 
 export function Heading() {
   return (
@@ -90,6 +116,7 @@ export function Heading() {
         kind="video"
         alt="A monochrome ascent through a steel and glass escalator"
         poster="/media/poster.jpg"
+        paused
         width="3.3em"
         height="0.85em"
         fit="crop"
@@ -100,12 +127,12 @@ export function Heading() {
 }
 ```
 
-For drag placement between words:
+For an explicitly requested placement editor, enable dragging between words. The following wrappers render a `div`; use `ArtifactPill` inside a real `h1` or `p` for a published static composition:
 
 ```tsx
 'use client';
 import { useState } from 'react';
-import { InlineArtifactText } from '@design-components/artifact-pill/react';
+import { InlineArtifactText } from 'intertext-dev/react';
 
 export function EditableHeading() {
   const [position, setPosition] = useState(1);
@@ -114,6 +141,7 @@ export function EditableHeading() {
       text="Designing text interfaces for new forms of computing."
       position={position}
       onPositionChange={setPosition}
+      movable
       style={{ fontSize: 'clamp(2rem, 7vw, 8rem)', lineHeight: 1.2 }}
       artifact={{
         src: '/media/photo.jpg',
@@ -135,7 +163,7 @@ export function EditableHeading() {
 
 ```tsx
 import { useState } from 'react';
-import { InlineArtifactsText, type InlineArtifactItem } from '@design-components/artifact-pill/react';
+import { InlineArtifactsText, type InlineArtifactItem } from 'intertext-dev/react';
 
 export function Composition() {
   const [artifacts, setArtifacts] = useState<InlineArtifactItem[]>([
@@ -145,6 +173,7 @@ export function Composition() {
   return <InlineArtifactsText
     text="Designing text interfaces for new forms of computing."
     artifacts={artifacts}
+    movable
     onPositionChange={(id, position) => setArtifacts(items =>
       items.map(item => item.id === id ? { ...item, position } : item)
     )}
@@ -167,7 +196,7 @@ onTextChange={(text, positions) => {
 
 The callback provides the updated plain text and pill positions together. Selection replacement and cut preserve the pills, paste strips formatting, and Enter inserts a line break. Text undo/redo works within an editing session; external changes to the composition, such as adding or dragging a pill, start a new undo history. Omit `onTextChange` for a display-only text composition.
 
-Both wrappers are controlled plain-text compositions, not rich-text editors; drag is limited to the current block. Pointer events support mouse, pen, and touch. Focus a pill and use Left/Right or Home/End to move it. Escape cancels an active drag; releasing outside the block cancels placement. Position changes are announced to assistive technology.
+Both wrappers are controlled plain-text compositions, not rich-text editors; they default to movable and drag is limited to the current block. Choose them only for visitor-facing placement/editing, or pass `movable={false}` for a display-only wrapper. Pointer events support mouse, pen, and touch. Focus a pill and use Left/Right or Home/End to move it. Escape cancels an active drag; releasing outside the block cancels placement. Position changes are announced to assistive technology.
 
 While dragging, the pill follows the exact point you grabbed and the words reflow immediately around its new position. The same media element stays mounted. Interruptible springs soften the movement of words and the pill's release; there is no insertion cursor or duplicate drag image. `onPositionChange` fires once on a valid release, so cancellation restores the original placement without updating your state. Reduced motion keeps direct pointer tracking and skips the settling animation.
 
@@ -175,8 +204,8 @@ While dragging, the pill follows the exact point you grabbed and the words reflo
 
 | HTML attribute | React prop | Behavior |
 | --- | --- | --- |
-| `src` | `src` | Image, GIF, or video URL |
-| `kind` | `kind` | `image` (default), `gif`, or `video`; explicit for URLs without extensions |
+| `src` | `src` | Image, GIF, video, or audio URL |
+| `kind` | `kind` | `image` (default), `gif`, `video`, or `audio`; specify the media type explicitly |
 | `alt` | `alt` | Media description; empty for decorative images |
 | `width`, `height` | same | Any CSS length, such as `em`, `px`, `%`, or `clamp()` |
 | `radius` | `radius` | CSS border radius; defaults to `999px` |
@@ -233,7 +262,7 @@ The studio's interaction and material refinements follow the [Apple design skill
 - **Concrete in motion (legacy asset)** — [Nuray on Pexels](https://www.pexels.com/video/elegant-brutalist-architecture-against-blue-sky-28883887/), under the [Pexels License](https://www.pexels.com/license/). An eight-second monochrome, silent architectural video excerpt, with a still poster.
 - **Shell chair** — [Resource Database on Unsplash](https://unsplash.com/photos/rZ1RPEom9gs), under the [Unsplash License](https://unsplash.com/license). A resized monochrome chair render from the creator's “Musical Chairs” series.
 
-The demo media is in `public/media` and is not included in the reusable library package. These assets retain their original licenses and are excluded from the repository's MIT license; see the [media license notice](https://github.com/davidezhang/intertext/blob/main/public/media/LICENSE.md) for the file-by-file mapping.
+The demo media is in `public/media` and is not included in the reusable library package. These assets retain their original licenses and are excluded from the repository's MIT license; see the [media license notice](https://intertext.dev/media/LICENSE.md) for the file-by-file mapping.
 
 ### Audio pills
 

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An Intertext editorial lead: photography woven into a responsive article headline.">
+  <title>Editorial lead — Intertext example</title>
+  <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
+  <style>
+    :root { color-scheme: light; color: #292622; background: #f6f2e9; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Georgia, 'Times New Roman', serif; }
+    a { color: inherit; text-underline-offset: .3em; }
+    a:focus-visible { outline: 2px solid #8f583e; outline-offset: 6px; }
+    header, main, footer { width: min(100% - 3rem, 1160px); margin-inline: auto; }
+    header { border-bottom: 1px solid #bdb3a5; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; padding-block: 1.75rem; }
+    .brand { font-size: 1.4rem; text-decoration: none; }
+    .edition, .eyebrow, .byline, footer { font-family: Arial, Helvetica, sans-serif; font-size: .72rem; }
+    .edition, .eyebrow { letter-spacing: .09em; text-transform: uppercase; }
+    .lead { padding-block: clamp(3rem, 8vw, 6rem) 3rem; }
+    .eyebrow { color: #87614c; }
+    h1 { font-size: clamp(2.8rem, 7.2vw, 6.75rem); line-height: 1.08; font-weight: 400; letter-spacing: -.045em; max-width: 18ch; margin: 1.3rem 0 1.75rem; }
+    artifact-pill { --artifact-background: #d7cfc2; }
+    .standfirst { max-width: 42rem; font-size: clamp(1.2rem, 2vw, 1.5rem); line-height: 1.45; color: #696052; }
+    .byline { color: #7a6f60; margin-top: 2rem; line-height: 1.7; }
+    .article-copy { max-width: 43rem; margin-left: auto; padding-block: 2.5rem 5rem; border-top: 1px solid #bdb3a5; }
+    .article-copy h2 { font-weight: 400; font-size: 2rem; margin: 0 0 1.25rem; }
+    .article-copy p { font-size: 1.15rem; line-height: 1.8; margin: 0 0 1.5rem; }
+    footer { color: #7a6f60; padding-block: 1.5rem; border-top: 1px solid #bdb3a5; line-height: 1.7; }
+    @media (max-width: 540px) { header, main, footer { width: calc(100% - 2rem); } .brand { font-size: 1.15rem; } .edition { font-size: .6rem; } h1 { font-size: clamp(2.6rem, 10.5vw, 4rem); } }
+  </style>
+</head>
+<body>
+  <header><a class="brand" href="#article">The Everyday</a><span class="edition">Notes on our surroundings</span></header>
+  <main>
+    <article id="article" aria-labelledby="article-title">
+      <div class="lead">
+        <p class="eyebrow">Architecture / A closer look</p>
+        <h1 id="article-title">Finding a softer rhythm in a <artifact-pill src="../media/concrete.jpg" alt="Angular concrete beams meeting recessed windows" width="2.6em" height=".8em" radius="999px" fit="crop"></artifact-pill> concrete city.</h1>
+        <p class="standfirst">A wall catches the afternoon light. A window frames a patch of sky. The smallest details can change how we move through a familiar place.</p>
+        <p class="byline">An Intertext editorial composition · Original sample essay</p>
+      </div>
+      <div class="article-copy">
+        <h2>The pause between places</h2>
+        <p>We often describe a city by its destinations. The station, the office, the place where we meet a friend. But much of our experience takes shape in the intervals: a staircase, a shaded threshold, the turn into a quieter street.</p>
+        <p>Look closely and the rigid outline begins to soften. Concrete holds the trace of a surface. Repeated windows make a rhythm. A corner that seemed severe from a distance becomes a place to stop and watch the light change.</p>
+        <p>This is a small invitation to notice what is already there. No new route is required. Only a little more attention to the one we take each day.</p>
+      </div>
+    </article>
+  </main>
+  <footer>Intertext editorial starter. <a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></footer>
+</body>
+</html>

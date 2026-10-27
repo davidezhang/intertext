@@ -1,8 +1,14 @@
 node_modules/
 dist/
+public/releases/
+public/examples/
+public/docs/integration.md
+public/.well-known/
 test-results/
 playwright-report/
+.playwright-cli/
 *.tgz
+!releases/*/*.tgz
 .DS_Store
 .env
 .env.*

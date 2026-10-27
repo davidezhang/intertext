@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { ArrowDownToLine, ArrowLeft, ArrowRight, Check, ChevronDown, X, Trash2, Code2, Copy, Image as ImageIcon, Link2, Monitor, Play, Plus, RotateCcw, Smartphone, Sparkles, Type, RectangleHorizontal } from 'lucide-react';
-import { ArtifactPill, InlineArtifactsText, type InlineArtifactItem } from './lib/react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, X, Trash2, Code2, Image as ImageIcon, Link2, Monitor, Play, Plus, RotateCcw, Smartphone, Sparkles, Type, RectangleHorizontal } from 'lucide-react';
+import { ArtifactPill, InlineArtifactsText } from './lib/react';
 import type { MediaKind } from './lib/artifact-pill';
 import { Slider, Toggle, Folder } from 'dialkit';
 import { DialTransition } from './DialTransition';
+import { DialFontPicker } from './DialFontPicker';
+import { studioFonts } from './studio-fonts';
 import { compileTransition } from './studio-motion';
 import { artifactProps, createPill, defaultText, randomPosition, samples, type Media, type PillConfig } from './studio-model';
 import { studioSounds } from './studio-sound';
+import { IntegrationPanel } from './IntegrationPanel';
 
 function ToolbarIcon({ name }: { name: 'add' | 'settings' }) {
   // Native 18px coordinates give both icons matching stroke width and edge alignment.
@@ -17,45 +20,6 @@ function ToolbarIcon({ name }: { name: 'add' | 'settings' }) {
 
 function RangeControl({ label, value, onChange, min, max, step = .05, unit = 'em' }: { label: string; value: number; onChange: (n: number) => void; min: number; max: number; step?: number; unit?: string }) {
   return <Slider label={label} value={value} onChange={next => { if (next !== value) studioSounds.play('tick'); onChange(next); }} min={min} max={max} step={step} unit={unit} />;
-}
-
-function CodePanel({ artifacts, text, hasUpload }: { artifacts: InlineArtifactItem[]; text: string; hasUpload: boolean }) {
-  const [tab, setTab] = useState<'react' | 'html'>('react');
-  const [copied, setCopied] = useState(false);
-  const [copyError, setCopyError] = useState(false);
-  const items = artifacts.map(({ id, position, artifact }) => {
-    const { style: _style, 'aria-label': _label, expanded: _expanded, ...media } = artifact;
-    return { id, position, artifact: { ...media, src: artifact.src.startsWith('blob:') ? `/media/${id}.${artifact.kind === 'audio' ? 'wav' : artifact.kind === 'video' ? 'mp4' : artifact.kind === 'gif' ? 'gif' : 'jpg'}` : artifact.src } };
-  });
-  const reactCode = `'use client';\nimport { useState } from 'react';\nimport { InlineArtifactsText, type InlineArtifactItem } from '@design-components/artifact-pill/react';\n\nexport default function Headline() {\n  const [artifacts, setArtifacts] = useState<InlineArtifactItem[]>(${JSON.stringify(items, null, 2)});\n  return (\n    <InlineArtifactsText\n      text={${JSON.stringify(text)}}\n      artifacts={artifacts}\n      onPositionChange={(id, position) => setArtifacts(items =>\n        items.map(item => item.id === id ? { ...item, position } : item)\n      )}\n      style={{ fontSize: 'clamp(2rem, 6vw, 5rem)', lineHeight: 1.25 }}\n    />\n  );\n}`;
-  const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  const htmlParts: string[] = [];
-  for (let index = 0; index <= words.length; index++) {
-    items.filter(item => item.position === index).forEach(({ artifact }) => {
-      const attrs = Object.entries(artifact).filter(([, value]) => value !== undefined && value !== false).map(([key, value]) => `    ${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}${value === true ? '' : `="${escape(String(value))}"`}`).join('\n');
-      htmlParts.push(`  <artifact-pill\n${attrs}\n  ></artifact-pill>`);
-    });
-    if (index < words.length) htmlParts.push(`  ${escape(words[index])}`);
-  }
-  const htmlCode = `<script type="module" src="./artifact-pill.js"></script>\n\n<p style="font-size: clamp(2rem, 6vw, 5rem); line-height: 1.25">\n${htmlParts.join('\n')}\n</p>`;
-  const code = tab === 'react' ? reactCode : htmlCode;
-  async function copy() {
-    try { await navigator.clipboard.writeText(code); studioSounds.play('tick'); setCopyError(false); setCopied(true); setTimeout(() => setCopied(false), 1800); }
-    catch { setCopyError(true); }
-  }
-  function download() {
-    const url = URL.createObjectURL(new Blob([code], { type: 'text/plain' }));
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = tab === 'react' ? 'Headline.tsx' : 'index.html'; anchor.click(); URL.revokeObjectURL(url);
-  }
-  return <div className="code-panel">
-    <div className="code-tabs"><div className="segmented"><button aria-pressed={tab === 'react'} onClick={() => setTab('react')}>React</button><button aria-pressed={tab === 'html'} onClick={() => setTab('html')}>HTML / any framework</button></div><button className="text-button" data-ui-sound="none" onClick={copy}>{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied' : 'Copy code'}</button></div>
-    <pre tabIndex={0} aria-label="Component code"><code>{code}</code></pre>
-    <p className="code-note">{tab === 'react' ? 'Install the local package using the README, then import the React wrapper. Drag placement is included.' : 'Copy dist/lib/artifact-pill.js beside this file. The native element works with HTML, Vue, Svelte, and more. Drag placement is provided by the React text wrapper.'}</p>
-    {hasUpload && <p className="code-note">Add your uploaded media to your project and replace the sample file path.</p>}
-    {copyError && <p role="status" className="error-text">Clipboard unavailable. Select the code above or download the snippet.</p>}
-    <div className="code-actions"><button className="primary-button" onClick={download}><ArrowDownToLine size={15} /> Download snippet</button></div>
-  </div>;
 }
 
 type Panel = 'media' | 'text' | 'shape' | 'motion' | 'canvas' | 'export' | null;
@@ -167,8 +131,10 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [inspector, setInspector] = useState<'global' | 'pill' | null>(null);
   const [globalPanel, setGlobalPanel] = useState<Panel>('text');
+  const [integrationOpen, setIntegrationOpen] = useState(false);
   const [text, setText] = useState(defaultText);
   const [fontSize, setFontSize] = useState(100);
+  const [font, setFont] = useState(studioFonts[0]);
   const [dark, setDark] = useState(true);
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -185,6 +151,7 @@ export default function App() {
   const wordCount = (text.match(/\S+/gu) || []).length;
   const selected = pills.find(pill => pill.id === selectedId);
   const artifacts = pills.map(pill => ({ id: pill.id, position: pill.position, artifact: artifactProps(pill, dark, reducedMotion) }));
+  const exportComposition = { text, artifacts: pills.map(pill => ({ id: pill.id, position: pill.position, artifact: artifactProps(pill, dark, false) })), font, fontSize, dark };
   const loopKey = JSON.stringify(pills.filter(pill => pill.loop).map(pill => [pill.id, pill.duration]));
 
   function updatePill(id: string, patch: Partial<PillConfig>) {
@@ -243,6 +210,7 @@ export default function App() {
   useEffect(() => {
     const shortcuts = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
+      if (integrationOpen) return;
       if (event.key === 'Escape') { if (inspector) studioSounds.play('tick'); closeInspector(); return; }
       if ((event.target as HTMLElement).closest('input, textarea, select, [contenteditable=true]') || event.metaKey || event.ctrlKey || event.altKey) return;
       const next = ({ t: 'text', c: 'canvas', e: 'export' } as const)[event.key.toLowerCase() as 't'];
@@ -250,7 +218,7 @@ export default function App() {
     };
     window.addEventListener('keydown', shortcuts);
     return () => window.removeEventListener('keydown', shortcuts);
-  }, [inspector]);
+  }, [inspector, integrationOpen]);
 
   function addPill() {
     const number = nextPill.current++;
@@ -274,7 +242,7 @@ export default function App() {
     const count = (value.match(/\S+/gu) || []).length;
     setPills(current => current.map(pill => ({ ...pill, position: Math.min(positions?.[pill.id] ?? pill.position, count) })));
   }
-  function resetGlobal() { updateText(defaultText); setFontSize(100); setDark(true); setViewport('desktop'); }
+  function resetGlobal() { updateText(defaultText); setFontSize(100); setFont(studioFonts[0]); setDark(true); setViewport('desktop'); }
   function uploadFile(file?: File) {
     const id = uploadTarget.current;
     if (!file || !id) return;
@@ -288,7 +256,7 @@ export default function App() {
     onPointerDownCapture={event => { if (event.button === 0) void studioSounds.unlock(); }} onKeyDownCapture={() => { void studioSounds.unlock(); }}>
     <main className="canvas" aria-label="Live component preview" onPointerDown={event => { if (!(event.target as HTMLElement).closest('artifact-pill')) { if (inspector) studioSounds.play('tick'); closeInspector(); } }}>
       <div className={`canvas-inner ${viewport}`}>
-        <div ref={composition} className="composition" style={{ '--type-scale': fontSize / 100 } as CSSProperties}>
+        <div ref={composition} className="composition" style={{ '--type-scale': fontSize / 100, '--type-family': font.family, '--type-tracking': font.letterSpacing, '--type-tracking-mobile': font.mobileLetterSpacing } as CSSProperties}>
           <InlineArtifactsText className="specimen" text={text} artifacts={artifacts} selectedId={selectedId}
             onTextChange={(value, positions) => { if (value !== text) studioSounds.play('tick'); updateText(value, positions); }}
             onPositionChange={(id, position) => { if (pills.find(pill => pill.id === id)?.position !== position) studioSounds.play('thump'); updatePill(id, { position }); }} onSelectArtifact={selectPill}
@@ -296,7 +264,9 @@ export default function App() {
         </div>
       </div>
     </main>
+    <div className="studio-wordmark">intertext<span>Media inside your words.</span></div>
     <div className="canvas-toolbar" role="toolbar" aria-label="Canvas actions">
+      <button className="use-site-button" onClick={() => setIntegrationOpen(true)}>Use on your site <ArrowRight size={14} /></button>
       <button className="toolbar-button" data-ui-sound="thump" aria-label="Add pill" title="Add pill" onClick={addPill}><ToolbarIcon name="add" /></button>
       <button className="toolbar-button" data-ui-sound="thump" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><ToolbarIcon name="settings" /></button>
     </div>
@@ -305,8 +275,9 @@ export default function App() {
       <div className="sidebar-sections">
         {inspector === 'global' ? <>
           <ControlSection name="text" title="Typography" icon={<Type size={15} />} open={globalPanel === 'text'} onToggle={() => toggleGlobal('text')}>
-            <p className="control-hint">Click the text on the canvas to edit it.</p>
+            <div data-ui-sound="none"><DialFontPicker value={font} onChange={next => { if (next.id !== font.id) studioSounds.play('tick'); setFont(next); }} /></div>
             <div className="shape-dials"><RangeControl label="Type scale" value={fontSize} min={50} max={160} step={1} unit="%" onChange={setFontSize} /></div>
+            <p className="control-hint">Click the text on the canvas to edit it.</p>
           </ControlSection>
           <ControlSection name="canvas" title="Canvas" icon={<Monitor size={15} />} open={globalPanel === 'canvas'} onToggle={() => toggleGlobal('canvas')}>
             <span className="field-heading">Background</span>
@@ -315,7 +286,8 @@ export default function App() {
             <div className="segmented" role="group" aria-label="Preview width"><button aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')}><Monitor size={13} /> Fluid</button><button aria-pressed={viewport === 'mobile'} onClick={() => setViewport('mobile')}><Smartphone size={13} /> 375 px</button></div>
           </ControlSection>
           <ControlSection name="export" title="Export" icon={<Code2 size={15} />} open={globalPanel === 'export'} onToggle={() => toggleGlobal('export')}>
-            <CodePanel artifacts={artifacts} text={text} hasUpload={pills.some(pill => pill.media.id === 'upload')} />
+            <p className="control-hint">Take this composition to your website with React, HTML, or your coding agent.</p>
+            <button className="primary-button full-width" onClick={() => setIntegrationOpen(true)}>Use on your site <ArrowRight size={14} /></button>
           </ControlSection>
           <div className="sound-preference" data-ui-sound="none"><Toggle label="UI sounds" checked={soundEnabled} onChange={setSoundsEnabled} /></div>
         </> : selected && <PillSettings key={selected.id} pill={selected} wordCount={wordCount} reducedMotion={reducedMotion}
@@ -329,6 +301,7 @@ export default function App() {
         : selected && <button className="text-button" onClick={() => removePill(selected.id)}><Trash2 size={13} /> Remove pill</button>}
       </footer>
     </aside>
+    <IntegrationPanel open={integrationOpen} onClose={() => setIntegrationOpen(false)} composition={exportComposition} />
     <span className="visually-hidden" role="status" aria-live="polite">{announcement}</span>
     <input ref={upload} className="visually-hidden" type="file" aria-label="Upload media file" tabIndex={-1} accept="image/jpeg,image/png,image/gif,image/webp,image/avif,video/mp4,video/webm,video/quicktime,audio/*" onChange={e => { uploadFile(e.target.files?.[0]); e.target.value = ''; }} />
   </div>;
