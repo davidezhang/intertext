@@ -27,4 +27,14 @@ export const studioFonts: readonly StudioFont[] = [
     mobileLetterSpacing: '-.02em',
     stylesheetUrl: 'https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap',
   },
+  {
+    // DialKit already loads Geist Mono for its values, so the studio needs no extra request.
+    id: 'geist-mono',
+    label: 'Mono',
+    name: 'Geist Mono',
+    family: "'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
+    letterSpacing: '-.06em',
+    mobileLetterSpacing: '-.05em',
+    stylesheetUrl: 'https://fonts.googleapis.com/css2?family=Geist+Mono&display=swap',
+  },
 ];

@@ -167,8 +167,8 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 .controls-sidebar.dialkit-root{--dial-radius:6px;--dial-row-height:36px;--dial-row-gap:6px;--dial-text-label:var(--fg);--dial-text-section:var(--muted);--dial-text-focus:var(--fg);--dial-focus-ring:var(--fg);--dial-border:var(--hairline);font-family:inherit}
 .dial-stack{display:flex;flex-direction:column;gap:6px}
 .shape-dials{margin-top:16px}
-.font-picker.dialkit-segmented{display:grid;grid-template-columns:repeat(var(--font-count),minmax(0,1fr));padding:3px;background:var(--dial-surface);border-radius:8px}
-.font-picker .dialkit-segmented-pill{top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--font-count));transform:translateX(calc(var(--font-index)*100%));transition:transform 200ms cubic-bezier(.25,1,.5,1)}
+.font-picker.dialkit-segmented{display:grid;grid-template-columns:repeat(var(--font-count),minmax(0,1fr));gap:3px;padding:3px;background:var(--dial-surface);border-radius:8px}
+.font-picker .dialkit-segmented-pill{top:3px;bottom:3px;left:3px;width:calc((100% - 6px - (var(--font-count) - 1)*3px)/var(--font-count));transform:translateX(calc(var(--font-index)*(100% + 3px)));transition:transform 200ms cubic-bezier(.25,1,.5,1)}
 .font-picker .font-option{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;padding:6px;border-radius:6px;font-weight:400}
 .font-picker .font-option[data-active=false]{color:var(--muted)}
 .font-picker .font-option:focus-visible{outline:2px solid var(--dial-focus-ring);outline-offset:-2px}
@@ -191,8 +191,8 @@ input[type=range]:focus-visible{outline-offset:0;border-radius:5px}
 /* Export lives in the sidebar and shares its DialKit surfaces, rows and type sizes. */
 /* Visually hidden labels and inputs stay inside the scrolling sections, not the fixed sidebar's scroll area. */
 .export-panel{position:relative}
-.export-methods.dialkit-segmented{display:grid;grid-template-columns:repeat(var(--choice-count),minmax(0,1fr));padding:3px;background:var(--dial-surface);border-radius:8px}
-.export-methods .dialkit-segmented-pill{top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--choice-count));transform:translateX(calc(var(--choice-index)*100%));transition:transform 200ms cubic-bezier(.25,1,.5,1)}
+.export-methods.dialkit-segmented{display:grid;grid-template-columns:repeat(var(--choice-count),minmax(0,1fr));gap:3px;padding:3px;background:var(--dial-surface);border-radius:8px}
+.export-methods .dialkit-segmented-pill{top:3px;bottom:3px;left:3px;width:calc((100% - 6px - (var(--choice-count) - 1)*3px)/var(--choice-count));transform:translateX(calc(var(--choice-index)*(100% + 3px)));transition:transform 200ms cubic-bezier(.25,1,.5,1)}
 .export-methods .dialkit-segmented-button{min-width:0;height:30px;padding:0 6px;border-radius:6px;font-size:12px;font-weight:500}
 .export-methods .dialkit-segmented-button[data-active=false]{color:var(--muted)}
 .export-methods .dialkit-segmented-button:focus-visible{outline:2px solid var(--dial-focus-ring);outline-offset:-2px}
