@@ -12,7 +12,7 @@ import ts from 'typescript';
 
 const source = readFileSync(new URL('../src/studio-export.ts', import.meta.url), 'utf8');
 const { outputText } = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
-const { generateExport, createCompositionManifest, createIntegrationPrompt, buildCompositionFiles, buildCompositionArchive, createStoredZip } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+const { generateExport, createCompositionManifest, createIntegrationPrompt, createPreviewPage, buildCompositionFiles, buildCompositionArchive, createStoredZip } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
 const font = { id: 'default', name: 'Helvetica Neue', label: 'Default', family: "'Helvetica Neue', Helvetica, Arial, sans-serif", letterSpacing: '-.058em', mobileLetterSpacing: '-.055em' };
 const makeInput = (overrides = {}) => ({ text: 'Designing text interfaces.', artifacts: [{ id: 'a', position: 1, artifact: { src: '/media/concrete.jpg', alt: 'Concrete', width: '3.3em', height: '.85em', hoverExpand: true } }], font, fontSize: 125, dark: true, ...overrides });
 const content = (files, path) => new TextDecoder().decode(files.find(file => file.path === path)?.bytes);
@@ -358,4 +358,20 @@ test('site appearance inherits the page typeface, color and size across HTML, Re
   assert.equal(JSON.parse(content(files, 'composition.json')).appearance, 'site');
   assert.match(createIntegrationPrompt(input), /use the site's own typography and colors/);
   assert.equal(createCompositionManifest(makeInput()).appearance, 'studio');
+});
+
+test('sample-page preview loads media and the runtime from the studio origin and keeps uploads readable', () => {
+  const input = makeInput({ appearance: 'site', artifacts: [
+    { id: 'a', position: 1, artifact: { src: '/media/concrete.jpg', alt: 'Concrete', hoverExpand: true } },
+    { id: 'b', position: 2, artifact: { src: 'blob:https://preview.test/upload', alt: 'Upload', kind: 'video', poster: '/media/poster.webp' } },
+  ] });
+  const html = createPreviewPage(input, 'https://preview.test/studio');
+  const document = new JSDOM(html).window.document;
+  assert.equal(document.querySelector('script[type="module"]').getAttribute('src'), 'https://preview.test/releases/0.1.0/artifact-pill.js');
+  const pills = [...document.querySelectorAll('artifact-pill')];
+  assert.deepEqual(pills.map(pill => pill.getAttribute('src')), ['https://preview.test/media/concrete.jpg', 'blob:https://preview.test/upload']);
+  assert.equal(pills[1].getAttribute('poster'), 'https://preview.test/media/poster.webp');
+  assert.match(html, /Sample page styles for this preview/);
+  assert.match(document.body.firstElementChild.textContent, /^Sample page preview\. Your site’s own fonts/);
+  assert.match(createPreviewPage(makeInput(), 'https://preview.test/studio'), /The Studio style brings its own fonts/);
 });

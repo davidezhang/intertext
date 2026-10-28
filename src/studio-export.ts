@@ -299,6 +299,32 @@ function mediaExtension(url: string, mime: string) {
   return extensions[type] || 'bin';
 }
 
+// Site compositions inherit page styles, so a page that shows one on its own supplies sample styles.
+function pageDocument(input: ExportComposition, code: string, preview = false) {
+  const site = input.appearance === 'site';
+  const background = input.dark ? '#050505' : '#fff';
+  const css = site
+    ? `\n/* Sample page styles for this preview. Your site's own styles take their place. */\nbody { margin: 0; padding: 48px 24px; font-family: system-ui, sans-serif; color: ${input.dark ? '#f5f5f5' : '#050505'}; background: ${background}; }\nh1, h2 { margin: 0; font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 400; line-height: 1.12; letter-spacing: -.04em; }\np { font-size: 1.25rem; line-height: 1.6; }\n`
+    : `body { margin: 0; padding: 48px 24px; background: ${background}; }`;
+  const note = preview ? `<p style="margin: 0 0 40px; font: 13px/1.5 system-ui, sans-serif; color: ${input.dark ? '#999' : '#707070'}">Sample page preview. ${site ? 'Your site’s own fonts, colors and sizes take the place of these.' : 'The Studio style brings its own fonts, colors and size.'}</p>\n` : '';
+  return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${preview ? 'Intertext preview' : 'Intertext composition'}</title>\n<style>${css}</style>\n</head>\n<body>\n${note}${code}</body>\n</html>\n`;
+}
+
+/** The HTML export on a sample page, loading media and the runtime from the studio's own origin. */
+export function createPreviewPage(input: ExportComposition, baseURL: string): string {
+  const base = new URL(baseURL);
+  const artifacts = input.artifacts.map(item => {
+    const artifact = normalizedProps(item.artifact);
+    // Uploads keep their blob: URLs, which a preview opened from the studio can still read.
+    for (const key of mediaKeys) {
+      const url = artifact[key];
+      if (url && !url.startsWith('blob:')) artifact[key] = new URL(url, base).href;
+    }
+    return { ...item, artifact };
+  });
+  return pageDocument(input, renderExport({ ...input, artifacts }, 'html', { runtimeURL: new URL(`${RELEASE}/artifact-pill.js`, base).href }), true);
+}
+
 /** Build files separately so asset paths can be verified without a browser download. */
 export async function buildCompositionFiles(input: ExportComposition, format: ExportFormat, options: ArchiveOptions = {}): Promise<ArchiveFile[]> {
   const fetcher = options.fetch || globalThis.fetch;
@@ -360,10 +386,6 @@ export async function buildCompositionFiles(input: ExportComposition, format: Ex
   files.push({ path: 'MEDIA-CREDITS.md', bytes: (await fetchFile('/media/LICENSE.md')).bytes });
   const site = input.appearance === 'site';
   const bundledFont = !site && input.font.id === 'instrument-serif';
-  // Site compositions inherit page styles, so their preview page supplies sample ones.
-  const pageCSS = site
-    ? `\n/* Sample page styles for this preview. Your site's own styles take their place. */\nbody { margin: 0; padding: 48px 24px; font-family: system-ui, sans-serif; color: ${input.dark ? '#f5f5f5' : '#050505'}; background: ${input.dark ? '#050505' : '#fff'}; }\nh1, h2 { margin: 0; font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 400; line-height: 1.12; letter-spacing: -.04em; }\np { font-size: 1.25rem; line-height: 1.6; }\n`
-    : `body { margin: 0; padding: 48px 24px; background: ${input.dark ? '#050505' : '#fff'}; }`;
   if (bundledFont) {
     for (const name of ['instrument-serif-latin-400-normal.woff2', 'instrument-serif-latin-ext-400-normal.woff2', 'InstrumentSerif-OFL.txt']) {
       files.push({ path: `fonts/${name}`, bytes: (await fetchFile(`/fonts/${name}`)).bytes });
@@ -371,7 +393,7 @@ export async function buildCompositionFiles(input: ExportComposition, format: Ex
     addText('fonts.css', `@font-face { font-family: 'Instrument Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url('./fonts/instrument-serif-latin-ext-400-normal.woff2') format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+2020-2027,U+2030-205E,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }\n@font-face { font-family: 'Instrument Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url('./fonts/instrument-serif-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }\n`);
   }
   const code = renderExport(bundled, format, { runtimeURL: './artifact-pill.js', bundledFont, packageURL: `./${PACKAGE_FILE}` });
-  addText(format === 'html' ? 'index.html' : 'Headline.tsx', format === 'html' ? `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Intertext composition</title>\n<style>${pageCSS}</style>\n</head>\n<body>\n${code}</body>\n</html>\n` : code);
+  addText(format === 'html' ? 'index.html' : 'Headline.tsx', format === 'html' ? pageDocument(input, code) : code);
   const manifest = createCompositionManifest(bundled);
   addText('composition.json', `${JSON.stringify({ ...manifest, artifacts: bundled.artifacts, media: mapping, typography: { ...manifest.typography, ...(bundledFont ? { fontStylesheet: './fonts.css' } : {}) } }, null, 2)}\n`);
   const steps = format === 'html'

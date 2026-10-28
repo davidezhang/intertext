@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { ArrowDownToLine, ArrowUpRight, Check, Copy } from 'lucide-react';
 import { Folder } from 'dialkit';
-import { createIntegrationPrompt, downloadComposition, generateExport, type ExportComposition } from './studio-export';
+import { createIntegrationPrompt, createPreviewPage, downloadComposition, generateExport, type ExportComposition } from './studio-export';
 import { studioSounds } from './studio-sound';
 
 type Method = 'agent' | 'react' | 'html';
@@ -13,6 +13,10 @@ const methods: Choices<Method> = [
 ];
 const appearances: Choices<Appearance> = [{ id: 'site', label: 'Match site' }, { id: 'studio', label: 'Studio' }];
 const tags: Choices<Tag> = [{ id: 'h1', label: 'H1' }, { id: 'h2', label: 'H2' }, { id: 'p', label: 'Paragraph' }];
+const elementHints: Record<Tag, string> = {
+  h1: 'Use H1 once, for the page’s main headline.', h2: 'H2 suits a section heading.', p: 'Paragraph suits body text.',
+};
+type Copyable = { label: string; value: string; content: ReactNode; code?: boolean; meta?: string; disabled?: boolean };
 const skillCommand = 'npx skills add https://intertext.dev';
 const packageCommand = 'npm install intertext-dev';
 // Thumbnails echo each starter's own typeface, palette and pill shape.
@@ -101,13 +105,17 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const previewURL = useRef<string | undefined>(undefined);
   const input: ExportComposition = { ...composition, appearance, tag };
   const hasUploads = composition.artifacts.some(({ artifact }) => [artifact.src, artifact.poster].some(src => src?.startsWith('blob:')));
   const format = method === 'html' ? 'html' : 'react';
   const code = method === 'agent' ? '' : generateExport(input, format);
   const lines = code.split('\n').length;
 
-  useEffect(() => () => clearTimeout(copyTimer.current), []);
+  useEffect(() => () => {
+    clearTimeout(copyTimer.current);
+    if (previewURL.current) URL.revokeObjectURL(previewURL.current);
+  }, []);
   useEffect(() => {
     if (document.querySelector(`link[href="${exampleFonts}"]`)) return;
     const link = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: exampleFonts });
@@ -116,7 +124,7 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
 
   function choose(next: Method) {
     if (next === method) return;
-    studioSounds.play('tick'); setMethod(next); setError(''); setStatus('');
+    studioSounds.play('tick'); setMethod(next); setCopied(null); setError(''); setStatus('');
   }
   function setOption<T>(set: (value: T) => void) {
     return (next: T) => { studioSounds.play('tick'); set(next); setStatus(''); };
@@ -141,15 +149,23 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
       setError(reason instanceof Error ? reason.message : 'The kit could not be prepared. Please try again.');
     } finally { setBusy(false); }
   }
+  function openPreview() {
+    // One preview page stays available, so its tab can reload until the next preview replaces it.
+    if (previewURL.current) URL.revokeObjectURL(previewURL.current);
+    previewURL.current = URL.createObjectURL(new Blob([createPreviewPage(input, location.href)], { type: 'text/html' }));
+    window.open(previewURL.current, '_blank', 'noopener');
+  }
 
-  function copyRow(label: string, value: string, content: ReactNode, options: { code?: boolean; meta?: string; disabled?: boolean } = {}) {
-    const done = copied === label;
-    return <button type="button" className="copy-row" data-copied={done} disabled={options.disabled}
-      aria-label={`Copy ${label.toLowerCase()}`} title={options.code ? value : undefined} onClick={() => void copy(value, label)}>
-      <span className={`copy-row-text${options.code ? ' is-code' : ''}`}>{content}</span>
-      {options.meta && <span className="copy-row-meta">{options.meta}</span>}
-      <span className="copy-row-icon" aria-hidden="true">{done ? <Check size={14} /> : <Copy size={14} />}</span>
-    </button>;
+  // "Copied" appears on the step's label line, so confirming never changes the row's size.
+  function step(title: string, row: Copyable, extra?: ReactNode) {
+    const done = copied === row.label;
+    return <li><span className="export-step-label">{title}{done && <span className="export-step-copied" aria-hidden="true">Copied</span>}</span>
+      <button type="button" className="copy-row" data-copied={done} disabled={row.disabled}
+        aria-label={`Copy ${row.label.toLowerCase()}`} title={row.code ? row.value : undefined} onClick={() => void copy(row.value, row.label)}>
+        <span className={`copy-row-text${row.code ? ' is-code' : ''}`}>{row.content}</span>
+        {row.meta && <span className="copy-row-meta">{row.meta}</span>}
+        <span className="copy-row-icon" aria-hidden="true">{done ? <Check size={14} /> : <Copy size={14} />}</span>
+      </button>{extra}</li>;
   }
   const preview = <div className="export-preview"><Folder key={method} title="Preview code" defaultOpen={false}>
     <pre className="export-code" tabIndex={0} aria-label={`${method === 'html' ? 'HTML' : 'React'} code`}><code>{code}</code></pre>
@@ -163,24 +179,20 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
       <ChoiceRow label="Style" options={appearances} value={appearance} onChange={setOption(setAppearance)} />
       <ChoiceRow label="Element" options={tags} value={tag} onChange={setOption(setTag)} />
     </div>
-    <p className="control-hint">{appearance === 'site'
-      ? 'Takes your page’s typeface, color and size. Pills scale with your text.'
-      : 'Brings the studio’s typeface, colors and size with it.'}</p>
+    <p className="control-hint">{appearance === 'site' ? 'Uses your page’s fonts, colors and size.' : 'Brings the studio’s fonts, colors and size.'} {elementHints[tag]}</p>
+    <button type="button" className="text-button export-sample" onClick={openPreview}>
+      Preview on a sample page<ArrowUpRight size={12} aria-hidden="true" /><span className="visually-hidden"> (opens in a new tab)</span>
+    </button>
     <ol className={`export-steps${method === 'html' ? '' : ' is-numbered'}`}>
       {method === 'agent' && <>
-        <li><span className="export-step-label">Add the Intertext skill to your project</span>
-          {copyRow('Install command', skillCommand, skillCommand, { code: true })}</li>
-        <li><span className="export-step-label">Ask your agent to add this composition</span>
-          {copyRow('Agent prompt', createIntegrationPrompt(input), 'Agent prompt', { meta: 'with layout data' })}</li>
+        {step('Add the Intertext skill to your project', { label: 'Install command', value: skillCommand, content: skillCommand, code: true })}
+        {step('Ask your agent to add this composition', { label: 'Agent prompt', value: createIntegrationPrompt(input), content: 'Agent prompt', meta: 'with layout data' })}
       </>}
       {method === 'react' && <>
-        <li><span className="export-step-label">Install the package</span>
-          {copyRow('Install command', packageCommand, packageCommand, { code: true })}</li>
-        <li><span className="export-step-label">Add the component</span>
-          {copyRow('Component code', code, 'Headline.tsx', { meta: `${lines} lines`, disabled: hasUploads })}{preview}{uploadHint}</li>
+        {step('Install the package', { label: 'Install command', value: packageCommand, content: packageCommand, code: true })}
+        {step('Add the component', { label: 'Component code', value: code, content: 'Headline.tsx', meta: `${lines} lines`, disabled: hasUploads }, <>{preview}{uploadHint}</>)}
       </>}
-      {method === 'html' && <li><span className="export-step-label">Paste into any page</span>
-        {copyRow('HTML snippet', code, 'HTML snippet', { meta: `${lines} lines`, disabled: hasUploads })}{preview}{uploadHint}</li>}
+      {method === 'html' && step('Paste into any page', { label: 'HTML snippet', value: code, content: 'HTML snippet', meta: `${lines} lines`, disabled: hasUploads }, <>{preview}{uploadHint}</>)}
     </ol>
     <button type="button" className="primary-button full-width export-download" disabled={busy} onClick={() => void download()}>
       <ArrowDownToLine size={14} />{busy ? 'Preparing…' : method === 'agent' ? 'Download kit' : `Download ${method === 'html' ? 'HTML' : 'React'} kit`}<span>ZIP</span>
@@ -192,7 +204,7 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
     <span className="visually-hidden" role="status" aria-live="polite">{status}</span>
 
     <div className="panel-rule" />
-    <span className="field-heading">Starting points</span>
+    <span className="field-heading">Examples</span>
     <div className="example-grid">{examples.map(example =>
       <a key={example.slug} className="example-card" href={`/examples/${example.slug}.html`} target="_blank" rel="noreferrer">
         <span className="example-thumb" style={example.style} aria-hidden="true">
