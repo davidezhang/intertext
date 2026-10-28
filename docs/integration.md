@@ -90,15 +90,18 @@ The React entry supports React/React DOM 18+ and retains its client boundary for
 
 Start from one of these complete HTML pages. Each uses local demo media, the same browser bundle, semantic headings, and responsive CSS. Save and adapt the page’s HTML, keeping its runtime and media URLs or replacing them with your own.
 
-- [Portfolio introduction](https://intertext.dev/examples/portfolio.html): personal introduction with an opt-in video and selected-work section.
-- [Product story](https://intertext.dev/examples/product.html): inline object photography, an accessible detail toggle, and a product information section.
-- [Editorial lead](https://intertext.dev/examples/editorial.html): a readable article with architecture photography in its headline.
+- [Editorial](https://intertext.dev/examples/editorial.html): a serif magazine feature with photography in its headline and small pills in the body copy.
+- [Portfolio](https://intertext.dev/examples/portfolio.html): a dark, minimal introduction with three hover-expanding pills, a motion toggle, and an indexed work list.
+- [Product launch](https://intertext.dev/examples/product.html): wide uppercase type on bold color, an expanding product photo with a touch and keyboard toggle, and a specification list.
+- [Event poster](https://intertext.dev/examples/event.html): condensed poster type with a playable audio pill, a spinning record, and a lineup.
+- [Studio](https://intertext.dev/examples/studio.html): a Swiss-grid architecture practice with square media, an opt-in film, and a project index.
+- [Field notes](https://intertext.dev/examples/notes.html): a journal entry with images, a GIF, and a video set inside running text at reading size.
 
 These are free starter compositions. Replace their illustrative copy and media before publishing your own site. See the [demo media credits](https://intertext.dev/media/LICENSE.md); the photos and video retain their original licenses.
 
 ## Bring a studio composition
 
-Choose **Use on your site** in the studio to copy HTML or React, get an agent prompt, or download a complete kit. The ZIP includes your code, uploaded and sample media, a local runtime or package, and setup instructions. Follow its README to place those files in your project. External media URLs stay external.
+Open **Global settings → Export** in the studio (or press <kbd>E</kbd>) to copy HTML or React, copy an agent prompt, or download a complete kit. The ZIP includes your code, uploaded and sample media, a local runtime or package, and setup instructions. Follow its README to place those files in your project. External media URLs stay external.
 
 A copied snippet or composition JSON stores configuration, not uploaded file bytes. Uploads use temporary `blob:` URLs in the studio; the kit replaces them with real local paths. Download the kit when your composition includes uploads, and never publish browser-session URLs. Keep the exported dimensions, fitting, and motion settings while adapting the semantic text container to your page.
 

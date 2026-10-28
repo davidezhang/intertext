@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An Intertext studio starter: a Swiss-grid architecture practice with square media, a short film inside the headline and a project index.">
+  <title>Studio — Intertext example</title>
+  <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
+  <style>
+    :root { color-scheme: light; --paper: #e8e7e3; --ink: #111; --soft: #67665f; --rule: #bdbcb5; color: var(--ink); background: var(--paper); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: inherit; text-decoration: none; }
+    a:focus-visible, button:focus-visible, artifact-pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    artifact-pill { --artifact-background: #cfcec8; --artifact-focus: var(--ink); --artifact-radius: 0; }
+    .wrap { width: min(100% - 3rem, 1440px); margin-inline: auto; }
+    .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 1.25rem; }
+    .label { font: 400 .72rem/1.5 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; letter-spacing: .02em; text-transform: uppercase; }
+    header { padding-block: 1.25rem; border-bottom: 1px solid var(--ink); }
+    header > :nth-child(1) { grid-column: span 3; font: 500 .95rem/1.5 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: -.01em; text-transform: none; }
+    header > :nth-child(2) { grid-column: span 3; }
+    header > :nth-child(3) { grid-column: span 3; color: var(--soft); }
+    header nav { grid-column: span 3; display: flex; justify-content: flex-end; gap: 1.25rem; }
+    header nav a:hover { text-decoration: underline; text-underline-offset: .25em; }
+    .hero { padding-block: clamp(4rem, 12vw, 10rem) 2rem; }
+    h1 { grid-column: 1 / span 11; margin: 0; font-size: clamp(2.8rem, 7.6vw, 8.2rem); font-weight: 500; line-height: .98; letter-spacing: -.05em; }
+    h1 artifact-pill { --artifact-align: -.03em; }
+    .hero-meta { margin-top: clamp(3rem, 7vw, 5.5rem); padding-top: 1rem; border-top: 1px solid var(--ink); align-items: start; }
+    .hero-meta > p { grid-column: 7 / span 5; margin: 0; max-width: 34rem; font-size: 1.15rem; line-height: 1.5; }
+    .hero-meta > div { grid-column: 1 / span 6; display: flex; flex-direction: column; align-items: flex-start; gap: .75rem; }
+    button { display: inline-flex; align-items: center; gap: .6rem; padding: .55rem .8rem; border: 1px solid var(--ink); border-radius: 0; background: transparent; color: inherit; cursor: pointer; }
+    button:hover, button[aria-pressed=true] { background: var(--ink); color: var(--paper); }
+    .index { padding-block: 4rem 6rem; }
+    .index-head { padding-bottom: .75rem; border-bottom: 1px solid var(--ink); color: var(--soft); }
+    .index-head h2 { grid-column: span 6; margin: 0; font: inherit; color: var(--ink); }
+    .index-head span { grid-column: span 2; }
+    .index ol { margin: 0; padding: 0; list-style: none; }
+    .index li { align-items: center; padding-block: 1rem; border-bottom: 1px solid var(--rule); }
+    .index li > .label:first-child { grid-column: span 1; color: var(--soft); }
+    .index h3 { grid-column: span 5; margin: 0; font-size: clamp(1.4rem, 2.6vw, 2.4rem); font-weight: 500; letter-spacing: -.04em; }
+    .index h3 artifact-pill { margin-left: .25em; --artifact-align: -.08em; }
+    .index li > .label { grid-column: span 2; }
+    .index li > .label:last-child { text-align: right; }
+    .practice { padding-block: 0 5rem; }
+    .practice h2 { grid-column: span 3; margin: 0; }
+    .practice p { grid-column: span 4; margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.55; color: var(--soft); }
+    footer { padding-block: 1.25rem 2rem; border-top: 1px solid var(--ink); color: var(--soft); }
+    footer > :first-child { grid-column: span 6; }
+    footer > :last-child { grid-column: span 6; text-align: right; }
+    footer a { text-decoration: underline; text-underline-offset: .2em; }
+    @media (max-width: 900px) {
+      header > :nth-child(2), header > :nth-child(3) { display: none; } header > :nth-child(1) { grid-column: span 6; } header nav { grid-column: span 6; }
+      h1 { grid-column: 1 / -1; } .hero-meta > p, .hero-meta > div { grid-column: 1 / -1; } .hero-meta > div { order: 2; margin-top: 1.5rem; }
+      .index-head span:not(:last-child) { display: none; } .index-head h2 { grid-column: span 10; }
+      .index li > .label:first-child { grid-column: span 2; } .index h3 { grid-column: span 10; } .index li > .label:nth-child(4) { display: none; }
+      .index li > .label:nth-child(3) { grid-column: 3 / span 7; margin-top: .35rem; color: var(--soft); } .index li > .label:last-child { grid-column: span 3; margin-top: .35rem; }
+      .practice h2, .practice p { grid-column: 1 / -1; } .practice h2 { margin-bottom: 1rem; }
+    }
+    @media (max-width: 520px) { .wrap { width: calc(100% - 2rem); } h1 { font-size: clamp(2.4rem, 12vw, 3.6rem); } footer > * { grid-column: 1 / -1 !important; text-align: left !important; } }
+  </style>
+</head>
+<body>
+  <header class="wrap grid label">
+    <a href="#top">Atelier Nord</a>
+    <span>Architecture and interiors</span>
+    <span>59.33° N, 18.06° E</span>
+    <nav aria-label="Primary"><a href="#projects">Projects</a><a href="#practice">Practice</a><a href="mailto:studio@example.com">Contact</a></nav>
+  </header>
+  <main class="wrap" id="top">
+    <section class="hero" aria-labelledby="studio-title">
+      <div class="grid"><h1 id="studio-title">We design quiet <artifact-pill id="film" kind="video" src="../media/concrete-motion.mp4" poster="../media/concrete-motion.jpg" alt="Clouds drifting past a curved concrete facade" width="2.5em" height=".8em" radius="0" position="50% 35%" paused></artifact-pill> rooms for loud cities.</h1></div>
+      <div class="grid hero-meta">
+        <div><span class="label" style="color: var(--soft)">Fig. 1 — Facade study, 2026</span><button class="label" id="film-toggle" type="button" aria-pressed="false" hidden>▶ Play film</button></div>
+        <p>A small practice in Stockholm working on libraries, homes and public rooms. We start with light, weight and the way people move through a building.</p>
+      </div>
+    </section>
+    <section class="index" id="projects" aria-labelledby="projects-title">
+      <div class="grid index-head label"><h2 id="projects-title">Selected projects</h2><span>Type</span><span>Location</span><span style="text-align: right">Year</span></div>
+      <ol>
+        <li class="grid"><span class="label">01</span><h3>Harbour Library <artifact-pill src="../media/concrete.jpg" alt="" width="1.5em" height=".75em"></artifact-pill></h3><span class="label">Civic</span><span class="label">Gothenburg</span><span class="label">2026</span></li>
+        <li class="grid"><span class="label">02</span><h3>Stair House <artifact-pill src="../media/escalator-motion.jpg" alt="" width="1.5em" height=".75em"></artifact-pill></h3><span class="label">Residential</span><span class="label">Uppsala</span><span class="label">2025</span></li>
+        <li class="grid"><span class="label">03</span><h3>Chair Archive <artifact-pill src="../media/shell-chair.jpg" alt="" width="1.5em" height=".75em" position="50% 40%"></artifact-pill></h3><span class="label">Exhibition</span><span class="label">Stockholm</span><span class="label">2024</span></li>
+        <li class="grid"><span class="label">04</span><h3>Cloud Court <artifact-pill src="../media/concrete-motion.jpg" alt="" width="1.5em" height=".75em"></artifact-pill></h3><span class="label">Housing</span><span class="label">Malmö</span><span class="label">2023</span></li>
+      </ol>
+    </section>
+    <section class="practice grid" id="practice" aria-labelledby="practice-title">
+      <h2 class="label" id="practice-title">Practice</h2>
+      <p>Six architects and one carpenter. We keep the office small so every project is drawn by the people who will visit the site.</p>
+      <p>We prefer reused material, long structural spans and rooms that can change use without being rebuilt.</p>
+    </section>
+  </main>
+  <footer class="wrap grid label">
+    <span>Intertext studio starter · Illustrative practice</span>
+    <span><a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></span>
+  </footer>
+  <script type="module">
+    await customElements.whenDefined('artifact-pill');
+    const pill = document.querySelector('#film');
+    const button = document.querySelector('#film-toggle');
+    const video = pill.shadowRoot?.querySelector('video');
+    const render = playing => { button.setAttribute('aria-pressed', String(playing)); button.textContent = playing ? '❚❚ Pause film' : '▶ Play film'; };
+    video?.addEventListener('pause', () => render(false));
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      if (button.getAttribute('aria-pressed') === 'true') { pill.setAttribute('paused', ''); pill.pause(); return; }
+      pill.removeAttribute('paused');
+      try { await pill.play(); render(true); } catch { pill.setAttribute('paused', ''); render(false); }
+    });
+  </script>
+</body>
+</html>

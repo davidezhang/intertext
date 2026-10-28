@@ -28,7 +28,7 @@ For a substantial API change, explain the intended website use case in an issue 
 ## Source and releases
 
 - `src/lib`: native element and React bindings.
-- `src/IntegrationPanel.tsx` and `src/studio-export.ts`: integration flow and portable exports.
+- `src/ExportPanel.tsx` and `src/studio-export.ts`: the studio's export flow and portable exports.
 - `skills/intertext`: coding-agent instructions and reference material.
 - `examples`: standalone compositions.
 - `docs/release.md`: versioned artifacts and release procedure.

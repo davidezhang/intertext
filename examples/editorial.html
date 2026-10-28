@@ -3,51 +3,76 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="An Intertext editorial lead: photography woven into a responsive article headline.">
-  <title>Editorial lead — Intertext example</title>
+  <meta name="description" content="An Intertext editorial starter: a magazine feature with photography set inside a serif headline and its body copy.">
+  <title>Editorial — Intertext example</title>
   <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
   <style>
-    :root { color-scheme: light; color: #292622; background: #f6f2e9; }
+    @font-face { font-family: 'Instrument Serif'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/instrument-serif-latin-400-normal.woff2') format('woff2'); }
+    :root { color-scheme: light; --paper: #f3eee4; --ink: #211c16; --soft: #6b5f50; --rule: #cdc2b1; --accent: #9b4b2c; color: var(--ink); background: var(--paper); }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Georgia, 'Times New Roman', serif; }
-    a { color: inherit; text-underline-offset: .3em; }
-    a:focus-visible { outline: 2px solid #8f583e; outline-offset: 6px; }
-    header, main, footer { width: min(100% - 3rem, 1160px); margin-inline: auto; }
-    header { border-bottom: 1px solid #bdb3a5; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; padding-block: 1.75rem; }
-    .brand { font-size: 1.4rem; text-decoration: none; }
-    .edition, .eyebrow, .byline, footer { font-family: Arial, Helvetica, sans-serif; font-size: .72rem; }
-    .edition, .eyebrow { letter-spacing: .09em; text-transform: uppercase; }
-    .lead { padding-block: clamp(3rem, 8vw, 6rem) 3rem; }
-    .eyebrow { color: #87614c; }
-    h1 { font-size: clamp(2.8rem, 7.2vw, 6.75rem); line-height: 1.08; font-weight: 400; letter-spacing: -.045em; max-width: 18ch; margin: 1.3rem 0 1.75rem; }
-    artifact-pill { --artifact-background: #d7cfc2; }
-    .standfirst { max-width: 42rem; font-size: clamp(1.2rem, 2vw, 1.5rem); line-height: 1.45; color: #696052; }
-    .byline { color: #7a6f60; margin-top: 2rem; line-height: 1.7; }
-    .article-copy { max-width: 43rem; margin-left: auto; padding-block: 2.5rem 5rem; border-top: 1px solid #bdb3a5; }
-    .article-copy h2 { font-weight: 400; font-size: 2rem; margin: 0 0 1.25rem; }
-    .article-copy p { font-size: 1.15rem; line-height: 1.8; margin: 0 0 1.5rem; }
-    footer { color: #7a6f60; padding-block: 1.5rem; border-top: 1px solid #bdb3a5; line-height: 1.7; }
-    @media (max-width: 540px) { header, main, footer { width: calc(100% - 2rem); } .brand { font-size: 1.15rem; } .edition { font-size: .6rem; } h1 { font-size: clamp(2.6rem, 10.5vw, 4rem); } }
+    body { margin: 0; font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif; }
+    a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: .22em; }
+    a:focus-visible, artifact-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    artifact-pill { --artifact-background: #d8cebf; --artifact-focus: var(--accent); }
+    .wrap { width: min(100% - 3rem, 1180px); margin-inline: auto; }
+    .meta { font: 500 .66rem/1.4 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+    .masthead { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 1rem; padding-block: 1.6rem 1.1rem; border-bottom: 1px solid var(--ink); }
+    .masthead .meta:last-child { text-align: right; }
+    .brand { font: 400 clamp(2rem, 4.2vw, 3rem)/1 'Instrument Serif', Georgia, serif; letter-spacing: -.02em; text-decoration: none; }
+    .sections { display: flex; justify-content: center; flex-wrap: wrap; gap: .5rem 1.75rem; margin: 0; padding: .8rem 0; border-bottom: 1px solid var(--rule); list-style: none; }
+    .sections a { text-decoration: none; }
+    .sections [aria-current] { color: var(--accent); }
+    .lead { padding-block: clamp(3.5rem, 9vw, 7rem) clamp(2.5rem, 6vw, 4.5rem); text-align: center; }
+    .kicker { color: var(--accent); }
+    h1 { max-width: 13ch; margin: 1.6rem auto 2rem; font: 400 clamp(3rem, 8.6vw, 8.5rem)/.98 'Instrument Serif', Georgia, serif; letter-spacing: -.025em; text-wrap: balance; }
+    .standfirst { max-width: 35rem; margin: 0 auto; color: var(--soft); font-size: clamp(1.15rem, 1.8vw, 1.4rem); font-style: italic; line-height: 1.5; }
+    .byline { margin-top: 2.25rem; color: var(--soft); }
+    .story { display: grid; grid-template-columns: 1fr minmax(0, 38rem) 1fr; gap: 3rem; padding-block: 3rem 5rem; border-top: 1px solid var(--rule); }
+    .story-notes { align-self: start; position: sticky; top: 2rem; color: var(--soft); line-height: 1.9; }
+    .copy p { margin: 0 0 1.45rem; font-size: 1.2rem; line-height: 1.72; hyphens: auto; }
+    .copy p:first-child::first-letter { float: left; margin: .08em .1em 0 0; font: 400 4.6em/.8 'Instrument Serif', Georgia, serif; color: var(--accent); }
+    .copy artifact-pill { --artifact-align: -.2em; }
+    blockquote { margin: 2.5rem 0; padding: 1.75rem 0; border-block: 1px solid var(--ink); font: 400 clamp(1.9rem, 3.6vw, 2.6rem)/1.08 'Instrument Serif', Georgia, serif; letter-spacing: -.015em; }
+    footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem 2rem; padding-block: 1.5rem 2.5rem; border-top: 1px solid var(--ink); color: var(--soft); }
+    footer .meta { letter-spacing: .08em; }
+    @media (max-width: 860px) { .story { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; } .story-notes { position: static; display: flex; flex-wrap: wrap; gap: .25rem 1.5rem; } .story > :last-child { display: none; } }
+    @media (max-width: 560px) { .wrap { width: calc(100% - 2rem); } .masthead { grid-template-columns: 1fr; justify-items: center; text-align: center; } .masthead .meta { display: none; } .sections { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; } h1 { font-size: clamp(2.7rem, 12.5vw, 4.25rem); } .copy p { font-size: 1.1rem; } }
   </style>
 </head>
 <body>
-  <header><a class="brand" href="#article">The Everyday</a><span class="edition">Notes on our surroundings</span></header>
-  <main>
+  <header class="wrap">
+    <div class="masthead">
+      <span class="meta">Issue 14 · Autumn 2026</span>
+      <a class="brand" href="#article">The Everyday</a>
+      <span class="meta">Notes on our surroundings</span>
+    </div>
+    <nav aria-label="Sections"><ul class="sections meta">
+      <li><a href="#article" aria-current="page">Architecture</a></li><li><a href="#article">Objects</a></li><li><a href="#article">Cities</a></li><li><a href="#article">Letters</a></li>
+    </ul></nav>
+  </header>
+  <main class="wrap">
     <article id="article" aria-labelledby="article-title">
       <div class="lead">
-        <p class="eyebrow">Architecture / A closer look</p>
-        <h1 id="article-title">Finding a softer rhythm in a <artifact-pill src="../media/concrete.jpg" alt="Angular concrete beams meeting recessed windows" width="2.6em" height=".8em" radius="999px" fit="crop"></artifact-pill> concrete city.</h1>
-        <p class="standfirst">A wall catches the afternoon light. A window frames a patch of sky. The smallest details can change how we move through a familiar place.</p>
-        <p class="byline">An Intertext editorial composition · Original sample essay</p>
+        <p class="meta kicker">Architecture · A closer look</p>
+        <h1 id="article-title">Finding a softer rhythm in a <artifact-pill src="../media/concrete.jpg" alt="Angular concrete beams meeting recessed windows" width="2.4em" height=".78em" expanded-width="3.4em" expanded-height="1.05em" hover-expand tabindex="0" fit="crop" position="50% 40%"></artifact-pill> concrete city.</h1>
+        <p class="standfirst">A wall catches the afternoon light. A window frames a patch of sky. The smallest details change how we move through a place we think we know.</p>
+        <p class="meta byline">Words by Ines Varga</p>
       </div>
-      <div class="article-copy">
-        <h2>The pause between places</h2>
-        <p>We often describe a city by its destinations. The station, the office, the place where we meet a friend. But much of our experience takes shape in the intervals: a staircase, a shaded threshold, the turn into a quieter street.</p>
-        <p>Look closely and the rigid outline begins to soften. Concrete holds the trace of a surface. Repeated windows make a rhythm. A corner that seemed severe from a distance becomes a place to stop and watch the light change.</p>
-        <p>This is a small invitation to notice what is already there. No new route is required. Only a little more attention to the one we take each day.</p>
+      <div class="story">
+        <p class="story-notes meta">8 min read<br>Filed under Cities</p>
+        <div class="copy">
+          <p>We often describe a city by its destinations: the station, the office, the corner where we meet a friend. Much of our experience takes shape in the intervals instead. A staircase <artifact-pill src="../media/escalator-motion.jpg" alt="Escalators rising through a steel and glass hall" width="2.2em" height="1.05em" radius="4px" fit="crop"></artifact-pill> folded into a station hall, a shaded threshold, the turn into a quieter street.</p>
+          <p>Look closely and the rigid outline begins to soften. Concrete keeps the grain of the boards it was poured against. Repeated windows make a rhythm. A corner that seemed severe from across the road becomes a place to stop and watch the light move.</p>
+          <blockquote>The material remembers every surface it once touched.</blockquote>
+          <p>This is a small invitation to notice what is already there. No new route is required, only a little more attention to the one we take each day — and, now and then, somewhere to sit <artifact-pill src="../media/shell-chair.jpg" alt="A black shell chair casting a soft shadow" width="1.6em" height="1.05em" radius="4px" fit="crop" position="50% 40%"></artifact-pill> while we look.</p>
+        </div>
+        <span></span>
       </div>
     </article>
   </main>
-  <footer>Intertext editorial starter. <a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></footer>
+  <footer class="wrap meta">
+    <span>Intertext editorial starter · Illustrative copy</span>
+    <span><a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></span>
+  </footer>
 </body>
 </html>

@@ -9,7 +9,7 @@ import { studioFonts } from './studio-fonts';
 import { compileTransition } from './studio-motion';
 import { artifactProps, createPill, defaultText, randomPosition, samples, type Media, type PillConfig } from './studio-model';
 import { studioSounds } from './studio-sound';
-import { IntegrationPanel } from './IntegrationPanel';
+import { ExportPanel } from './ExportPanel';
 
 function ToolbarIcon({ name }: { name: 'add' | 'settings' }) {
   // Native 18px coordinates give both icons matching stroke width and edge alignment.
@@ -131,7 +131,6 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [inspector, setInspector] = useState<'global' | 'pill' | null>(null);
   const [globalPanel, setGlobalPanel] = useState<Panel>('text');
-  const [integrationOpen, setIntegrationOpen] = useState(false);
   const [text, setText] = useState(defaultText);
   const [fontSize, setFontSize] = useState(100);
   const [font, setFont] = useState(studioFonts[0]);
@@ -210,7 +209,6 @@ export default function App() {
   useEffect(() => {
     const shortcuts = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
-      if (integrationOpen) return;
       if (event.key === 'Escape') { if (inspector) studioSounds.play('tick'); closeInspector(); return; }
       if ((event.target as HTMLElement).closest('input, textarea, select, [contenteditable=true]') || event.metaKey || event.ctrlKey || event.altKey) return;
       const next = ({ t: 'text', c: 'canvas', e: 'export' } as const)[event.key.toLowerCase() as 't'];
@@ -218,7 +216,7 @@ export default function App() {
     };
     window.addEventListener('keydown', shortcuts);
     return () => window.removeEventListener('keydown', shortcuts);
-  }, [inspector, integrationOpen]);
+  }, [inspector]);
 
   function addPill() {
     const number = nextPill.current++;
@@ -264,9 +262,7 @@ export default function App() {
         </div>
       </div>
     </main>
-    <div className="studio-wordmark">intertext<span>Media inside your words.</span></div>
     <div className="canvas-toolbar" role="toolbar" aria-label="Canvas actions">
-      <button className="use-site-button" onClick={() => setIntegrationOpen(true)}>Use on your site <ArrowRight size={14} /></button>
       <button className="toolbar-button" data-ui-sound="thump" aria-label="Add pill" title="Add pill" onClick={addPill}><ToolbarIcon name="add" /></button>
       <button className="toolbar-button" data-ui-sound="thump" aria-label="Global settings" title="Global settings" aria-expanded={inspector === 'global'} aria-controls="settings-sidebar" onClick={() => { setInspector(current => current === 'global' ? null : 'global'); setSelectedId(null); }}><ToolbarIcon name="settings" /></button>
     </div>
@@ -286,8 +282,7 @@ export default function App() {
             <div className="segmented" role="group" aria-label="Preview width"><button aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')}><Monitor size={13} /> Fluid</button><button aria-pressed={viewport === 'mobile'} onClick={() => setViewport('mobile')}><Smartphone size={13} /> 375 px</button></div>
           </ControlSection>
           <ControlSection name="export" title="Export" icon={<Code2 size={15} />} open={globalPanel === 'export'} onToggle={() => toggleGlobal('export')}>
-            <p className="control-hint">Take this composition to your website with React, HTML, or your coding agent.</p>
-            <button className="primary-button full-width" onClick={() => setIntegrationOpen(true)}>Use on your site <ArrowRight size={14} /></button>
+            <ExportPanel composition={exportComposition} />
           </ControlSection>
           <div className="sound-preference" data-ui-sound="none"><Toggle label="UI sounds" checked={soundEnabled} onChange={setSoundsEnabled} /></div>
         </> : selected && <PillSettings key={selected.id} pill={selected} wordCount={wordCount} reducedMotion={reducedMotion}
@@ -301,7 +296,6 @@ export default function App() {
         : selected && <button className="text-button" onClick={() => removePill(selected.id)}><Trash2 size={13} /> Remove pill</button>}
       </footer>
     </aside>
-    <IntegrationPanel open={integrationOpen} onClose={() => setIntegrationOpen(false)} composition={exportComposition} />
     <span className="visually-hidden" role="status" aria-live="polite">{announcement}</span>
     <input ref={upload} className="visually-hidden" type="file" aria-label="Upload media file" tabIndex={-1} accept="image/jpeg,image/png,image/gif,image/webp,image/avif,video/mp4,video/webm,video/quicktime,audio/*" onChange={e => { uploadFile(e.target.files?.[0]); e.target.value = ''; }} />
   </div>;

@@ -3,58 +3,100 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A responsive Intertext product story with inline object photography and a keyboard-accessible detail toggle.">
-  <title>Product story — Intertext example</title>
+  <meta name="description" content="An Intertext product starter: a bold launch page with an expanding product photo set inside wide uppercase type.">
+  <title>Product launch — Intertext example</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">
   <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
   <style>
-    :root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; color: #292b27; background: #efeee8; }
+    :root { color-scheme: dark; --blue: #2335f4; --deep: #1726c9; --fg: #fff; --soft: rgba(255, 255, 255, .72); --rule: rgba(255, 255, 255, .28); color: var(--fg); background: var(--blue); font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; }
     * { box-sizing: border-box; }
     body { margin: 0; }
-    a { color: inherit; text-underline-offset: .3em; }
-    a:focus-visible, button:focus-visible { outline: 2px solid #41634e; outline-offset: 6px; }
-    header, main, footer { width: min(100% - 3rem, 1200px); margin-inline: auto; }
-    header { display: flex; justify-content: space-between; gap: 1.5rem; padding-block: 2rem; font-size: .8rem; }
-    .brand { letter-spacing: .18em; text-decoration: none; }
-    .hero { padding-block: clamp(4rem, 10vw, 8rem) 5rem; }
-    .eyebrow { font-size: .7rem; letter-spacing: .13em; text-transform: uppercase; color: #6d7267; }
-    h1 { max-width: 17ch; margin: 1.2rem 0 2rem; font-size: clamp(3rem, 7.5vw, 7.25rem); font-weight: 400; line-height: 1.06; letter-spacing: -.06em; }
-    artifact-pill { --artifact-background: #e2e1da; --artifact-align: -.06em; }
-    .description { max-width: 34rem; line-height: 1.65; color: #62685b; font-size: 1.1rem; }
-    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-top: 2rem; font-size: .8rem; }
-    button { font: inherit; color: inherit; border: 1px solid #92998a; background: transparent; border-radius: 999px; padding: .85rem 1.3rem; cursor: pointer; }
-    button:hover { background: #e0e3d8; }
-    .details { border-top: 1px solid #babfb1; padding-block: 2.5rem 5rem; display: grid; grid-template-columns: 1fr 1.3fr; gap: 3rem; }
-    h2 { margin: 0; font-size: .75rem; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; }
-    .details h3 { font-size: 1.5rem; font-weight: 400; margin: 0 0 .75rem; }
-    .details p { max-width: 33rem; line-height: 1.6; color: #62685b; }
-    footer { border-top: 1px solid #babfb1; padding-block: 1.5rem; color: #62685b; font-size: .75rem; line-height: 1.7; }
-    @media (max-width: 540px) { header, main, footer { width: calc(100% - 2rem); } h1 { font-size: clamp(2.7rem, 11vw, 4rem); } .details { grid-template-columns: 1fr; gap: 1.5rem; } }
+    a { color: inherit; }
+    a:focus-visible, button:focus-visible, artifact-pill:focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
+    artifact-pill { --artifact-background: var(--deep); --artifact-focus: var(--fg); }
+    .wrap { width: min(100% - 3rem, 1400px); margin-inline: auto; }
+    .wide { font-stretch: 125%; font-weight: 800; letter-spacing: -.035em; text-transform: uppercase; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding-block: 1.5rem; font-size: .85rem; }
+    .brand { font-size: 1.35rem; text-decoration: none; }
+    header nav { display: flex; gap: 1.75rem; }
+    header nav a { text-decoration: none; opacity: .8; }
+    header nav a:hover { opacity: 1; }
+    .hero { padding-block: clamp(3.5rem, 10vw, 8.5rem) clamp(3rem, 6vw, 5rem); }
+    .eyebrow { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.75rem; padding-bottom: .9rem; border-bottom: 1px solid var(--rule); font-size: .85rem; font-stretch: 100%; }
+    h1 { margin: 0; font-size: clamp(3rem, 10.6vw, 11rem); line-height: .9; }
+    h1 artifact-pill { --artifact-align: -.04em; }
+    .buy { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 2rem; margin-top: clamp(2.5rem, 6vw, 4.5rem); }
+    .buy p { max-width: 30rem; margin: 0; color: var(--soft); font-size: 1.1rem; line-height: 1.55; }
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: .75rem; min-height: 3.25rem; padding: 0 1.5rem; border: 1px solid var(--fg); border-radius: 999px; font: inherit; font-size: .9rem; font-weight: 600; text-decoration: none; cursor: pointer; }
+    .button.solid { background: var(--fg); color: var(--blue); }
+    .button.ghost { background: transparent; color: var(--fg); }
+    .button.ghost:hover { background: rgba(255, 255, 255, .1); }
+    .price { font-variant-numeric: tabular-nums; opacity: .7; }
+    .features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--fg); }
+    .features article { padding: 1.75rem 2rem 3rem 0; }
+    .features article + article { padding-left: 2rem; border-left: 1px solid var(--rule); }
+    .features span { font-size: .85rem; opacity: .7; }
+    h2 { margin: 2.5rem 0 .75rem; font-size: clamp(1.4rem, 2.4vw, 2rem); line-height: 1; }
+    .features p { max-width: 24rem; margin: 0; color: var(--soft); line-height: 1.55; }
+    .specs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 2rem; padding-block: 3rem 5rem; border-top: 1px solid var(--fg); }
+    .specs h2 { margin: 0; }
+    dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; margin: 0; }
+    dl div { display: flex; justify-content: space-between; gap: 1rem; padding-block: .85rem; border-bottom: 1px solid var(--rule); }
+    dt { color: var(--soft); }
+    dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+    footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem 2rem; padding-block: 1.5rem 2.5rem; border-top: 1px solid var(--rule); color: var(--soft); font-size: .8rem; line-height: 1.6; }
+    @media (max-width: 860px) { .buy { grid-template-columns: 1fr; } .features { grid-template-columns: 1fr; } .features article, .features article + article { padding: 1.5rem 0 2rem; border-left: 0; border-bottom: 1px solid var(--rule); } .specs, dl { grid-template-columns: 1fr; } header nav { display: none; } }
+    @media (max-width: 480px) { .wrap { width: calc(100% - 2rem); } h1 { font-size: clamp(2.4rem, 13vw, 3.8rem); } .actions, .button { width: 100%; } }
   </style>
 </head>
 <body>
-  <header><a href="#story" class="brand">FORM</a><a href="#details">Object notes</a></header>
-  <main>
-    <section class="hero" id="story" aria-labelledby="product-title">
-      <p class="eyebrow">An object study / No. 01</p>
-      <h1 id="product-title">A little more <artifact-pill id="chair" src="../media/shell-chair.jpg" alt="Sculptural shell chair in a monochrome studio setting" width="2.2em" height=".85em" expanded-width="3.2em" expanded-height="1.4em" radius="999px" fit="crop" duration="550ms"></artifact-pill> room to pause.</h1>
-      <p class="description">An exploration of everyday objects and the space around them. Soft silhouettes, simple gestures, and a moment to sit with something familiar.</p>
-      <div class="actions"><button id="detail-toggle" type="button" aria-controls="chair" aria-pressed="false" hidden>Enlarge the image</button><a href="#details">Read the object notes</a></div>
+  <header class="wrap">
+    <a class="brand wide" href="#product">Shell</a>
+    <nav aria-label="Primary"><a href="#features">Design</a><a href="#specs">Details</a><a href="#product">Reserve</a></nav>
+  </header>
+  <main class="wrap">
+    <section class="hero" id="product" aria-labelledby="product-title">
+      <p class="eyebrow wide"><span>Lounge chair No. 01</span><span>Autumn 2026</span></p>
+      <h1 id="product-title" class="wide">Sit <artifact-pill id="chair" src="../media/shell-chair.jpg" alt="A black moulded shell chair casting a soft shadow on a pale floor" width="1.9em" height=".8em" expanded-width="2.7em" expanded-height="1.6em" radius="999px" position="50% 40%" duration="700ms" hover-expand tabindex="0"></artifact-pill> a little longer.</h1>
+      <div class="buy">
+        <p>One moulded shell, a wool seat and an ash frame. Made to order in a small workshop and built to be repaired, not replaced.</p>
+        <div class="actions">
+          <button class="button ghost" id="detail-toggle" type="button" aria-controls="chair" aria-expanded="false" hidden>Enlarge the chair</button>
+          <a class="button solid" href="#specs">Reserve <span class="price">€1,240</span></a>
+        </div>
+      </div>
     </section>
-    <section class="details" id="details" aria-labelledby="details-title">
-      <h2 id="details-title">Designed into the sentence</h2>
-      <div><h3>Let the object tell part of the story.</h3><p>The image lives in the same line as the words. Its proportions follow the type, while the surrounding sentence wraps naturally as the page becomes narrower.</p><p>Use this composition for a product introduction, a collection story, or an object-led campaign. The detail control works with a mouse, keyboard, or touch.</p></div>
+    <section class="features" id="features" aria-label="Design">
+      <article><span>01</span><h2 class="wide">Moulded shell</h2><p>A single curve of recycled polymer carries the back and arms, so the chair stays light enough to move with one hand.</p></article>
+      <article><span>02</span><h2 class="wide">Wool seat</h2><p>A replaceable pad in undyed felt. Unzip it to clean, or swap it for a new color years from now.</p></article>
+      <article><span>03</span><h2 class="wide">Ash frame</h2><p>Four turned legs, oiled by hand. Every joint is bolted, never glued, so each part can be repaired.</p></article>
+    </section>
+    <section class="specs" id="specs" aria-labelledby="specs-title">
+      <h2 class="wide" id="specs-title">Details</h2>
+      <dl>
+        <div><dt>Width</dt><dd>72 cm</dd></div><div><dt>Depth</dt><dd>78 cm</dd></div>
+        <div><dt>Height</dt><dd>74 cm</dd></div><div><dt>Seat height</dt><dd>38 cm</dd></div>
+        <div><dt>Weight</dt><dd>7.4 kg</dd></div><div><dt>Lead time</dt><dd>6–8 weeks</dd></div>
+      </dl>
     </section>
   </main>
-  <footer>Intertext product starter · Illustrative concept, not a product for sale. <a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></footer>
+  <footer class="wrap">
+    <span>Intertext product starter · Illustrative concept, not a product for sale</span>
+    <span><a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></span>
+  </footer>
   <script type="module">
     await customElements.whenDefined('artifact-pill');
     const pill = document.querySelector('#chair');
     const button = document.querySelector('#detail-toggle');
+    // Hover enlarges the photo with a pointer; this button does the same for touch and keyboard.
     button.hidden = false;
     button.addEventListener('click', () => {
       const expanded = pill.toggleAttribute('expanded');
-      button.setAttribute('aria-pressed', String(expanded));
-      button.textContent = expanded ? 'Restore the image size' : 'Enlarge the image';
+      button.setAttribute('aria-expanded', String(expanded));
+      button.textContent = expanded ? 'Restore the chair' : 'Enlarge the chair';
     });
   </script>
 </body>

@@ -79,6 +79,6 @@ Audio stays silent initially. Remote audio requires CORS for waveform decoding; 
 
 Only for requested editing/dragging, import `InlineArtifactsText` with items of shape `{ id, position, artifact }`. `position` is a word boundary: 0 precedes the first word. Keep IDs stable, control `onPositionChange(id, position)`, and set `movable` explicitly. `onTextChange(text, positions)` additionally enables in-place editing and supplies updated positions together with the text. These wrappers render `div` containers and are not a replacement for semantic headings in a published page.
 
-Public integration guide: https://intertext.dev/docs/integration.md. Studio: https://intertext.dev. Complete HTML recipes: https://intertext.dev/examples/portfolio.html, https://intertext.dev/examples/product.html, and https://intertext.dev/examples/editorial.html.
+Public integration guide: https://intertext.dev/docs/integration.md. Studio: https://intertext.dev. Complete HTML recipes: https://intertext.dev/examples/editorial.html, https://intertext.dev/examples/portfolio.html, https://intertext.dev/examples/product.html, https://intertext.dev/examples/event.html, https://intertext.dev/examples/studio.html, and https://intertext.dev/examples/notes.html.
 
 Install the skill from the website with `npx skills add https://intertext.dev`. Source and issue reports: https://github.com/davidezhang/intertext.

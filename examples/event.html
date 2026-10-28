@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An Intertext event starter: a loud, condensed gig poster with a playable audio pill and a spinning record inside the headline.">
+  <title>Event poster — Intertext example</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">
+  <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
+  <style>
+    :root { color-scheme: light; --acid: #d6ff3d; --ink: #0b0b0b; color: var(--ink); background: var(--acid); font-family: Archivo, 'Arial Narrow', Arial, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: inherit; }
+    a:focus-visible, button:focus-visible, artifact-pill:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+    artifact-pill { --artifact-background: var(--ink); --artifact-focus: var(--ink); --artifact-audio-background: var(--ink); --artifact-audio-color: var(--acid); --artifact-audio-progress: #6f8520; }
+    .wrap { width: min(100% - 2.5rem, 1500px); margin-inline: auto; }
+    .tight { font-stretch: 62%; font-weight: 900; text-transform: uppercase; }
+    .mono { font: 500 .78rem/1.45 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; letter-spacing: .02em; text-transform: uppercase; }
+    .strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; padding-block: 1.1rem; border-bottom: 3px solid var(--ink); }
+    .strip > :last-child { text-align: right; }
+    .poster { padding-block: clamp(2rem, 5vw, 4rem) clamp(2rem, 4vw, 3rem); }
+    h1 { margin: 0; font-size: clamp(4.5rem, 14vw, 16rem); line-height: .8; letter-spacing: -.012em; }
+    h1 artifact-pill { --artifact-align: .02em; }
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: clamp(1.75rem, 4vw, 3rem); }
+    button, .tickets { display: inline-flex; align-items: center; gap: .65rem; min-height: 3rem; padding: 0 1.25rem; border: 3px solid var(--ink); border-radius: 0; background: transparent; color: inherit; font: inherit; font-stretch: 62%; font-size: 1.25rem; font-weight: 900; text-transform: uppercase; text-decoration: none; cursor: pointer; }
+    button[aria-pressed=true], .tickets { background: var(--ink); color: var(--acid); }
+    button:hover { background: var(--ink); color: var(--acid); }
+    #playback-status { min-height: 1.45em; margin: .75rem 0 0; }
+    .lineup { border-top: 3px solid var(--ink); }
+    .lineup ol { margin: 0; padding: 0; list-style: none; }
+    .lineup li { display: grid; grid-template-columns: 7rem minmax(0, 1fr) auto; align-items: baseline; gap: 1.5rem; padding-block: .6rem .3rem; border-bottom: 3px solid var(--ink); }
+    .lineup h2 { margin: 0; font-size: clamp(2.6rem, 8vw, 7.5rem); line-height: .9; }
+    .details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; padding-block: 2.5rem 4rem; }
+    .details h3 { margin: 0 0 .5rem; font-size: 2rem; line-height: 1; }
+    .details p { margin: 0; max-width: 22rem; font-size: 1.05rem; line-height: 1.45; }
+    footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem 2rem; padding-block: 1.25rem 2rem; border-top: 3px solid var(--ink); }
+    @media (max-width: 860px) { .strip { grid-template-columns: 1fr 1fr; } .strip > :nth-child(odd) { text-align: left; } .strip > :nth-child(even) { text-align: right; } .details { grid-template-columns: 1fr; } .lineup li { grid-template-columns: 4.5rem minmax(0, 1fr); } .lineup li > :last-child { display: none; } }
+    @media (max-width: 480px) { .wrap { width: calc(100% - 1.5rem); } h1 { font-size: clamp(3.2rem, 19vw, 6rem); } button, .tickets { width: 100%; justify-content: center; } }
+  </style>
+</head>
+<body>
+  <header class="wrap strip mono">
+    <span>Concrete Hall</span><span>Live series 04</span><span>Fri 21 Nov 2026</span><span>Doors 20:00</span>
+  </header>
+  <main class="wrap">
+    <section class="poster" aria-labelledby="event-title">
+      <h1 id="event-title" class="tight">Night <artifact-pill id="record" kind="gif" src="../media/analog-loop.gif" poster="../media/analog-loop.jpg" alt="A vinyl record spinning under a tonearm" width="1.75em" height=".72em" radius="999px" play-on-hover paused></artifact-pill> signals, played <artifact-pill id="set" kind="audio" src="../media/intertext-music.m4a" alt="The opening synth set, just under a minute long" width="2.4em" height=".72em" paused></artifact-pill> live.</h1>
+      <div class="controls" id="controls" hidden>
+        <button type="button" data-target="set" data-label="the opening set" aria-pressed="false"><span aria-hidden="true">▶</span> Play the opening set</button>
+        <button type="button" data-target="record" data-label="the record" aria-pressed="false"><span aria-hidden="true">▶</span> Spin the record</button>
+        <a class="tickets" href="#tickets">Tickets €18</a>
+      </div>
+      <p id="playback-status" class="mono" role="status" aria-live="polite"></p>
+    </section>
+    <section class="lineup" aria-label="Lineup">
+      <ol>
+        <li><span class="mono">20:30</span><h2 class="tight">Ana Lume</h2><span class="mono">Opening set</span></li>
+        <li><span class="mono">21:45</span><h2 class="tight">Concrete Choir</h2><span class="mono">Live</span></li>
+        <li><span class="mono">23:00</span><h2 class="tight">Night Signals</h2><span class="mono">Headline</span></li>
+      </ol>
+    </section>
+    <section class="details" id="tickets" aria-label="Visit">
+      <div><h3 class="tight">Where</h3><p>Concrete Hall, Ferry Street 9. Step-free entrance on the east side.</p></div>
+      <div><h3 class="tight">When</h3><p>Friday 21 November. Doors at 20:00, last set ends at midnight.</p></div>
+      <div><h3 class="tight">Tickets</h3><p>€18 at the door or online. Under-18s welcome with an adult.</p></div>
+    </section>
+  </main>
+  <footer class="wrap mono">
+    <span>Intertext event starter · Illustrative event</span>
+    <span><a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></span>
+  </footer>
+  <script type="module">
+    await customElements.whenDefined('artifact-pill');
+    const status = document.querySelector('#playback-status');
+    document.querySelector('#controls').hidden = false;
+    for (const button of document.querySelectorAll('[data-target]')) {
+      const pill = document.getElementById(button.dataset.target);
+      const media = pill.shadowRoot?.querySelector('audio, video');
+      const render = playing => {
+        button.setAttribute('aria-pressed', String(playing));
+        button.innerHTML = `<span aria-hidden="true">${playing ? '❚❚' : '▶'}</span> ${playing ? 'Pause' : button.dataset.target === 'set' ? 'Play' : 'Spin'} ${button.dataset.label}`;
+      };
+      media?.addEventListener('pause', () => render(false));
+      media?.addEventListener('ended', () => render(false));
+      button.addEventListener('click', async () => {
+        status.textContent = '';
+        const playing = button.getAttribute('aria-pressed') === 'true';
+        pill.removeAttribute('play-on-hover');
+        if (playing) { pill.setAttribute('paused', ''); pill.pause(); render(false); return; }
+        if (!media && matchMedia('(prefers-reduced-motion: reduce)').matches) { status.textContent = 'The record stays still while reduced motion is on.'; return; }
+        pill.removeAttribute('paused');
+        try { await pill.play(); render(true); }
+        catch { pill.setAttribute('paused', ''); render(false); status.textContent = 'Playback could not start. Please try again.'; }
+      });
+    }
+  </script>
+</body>
+</html>
