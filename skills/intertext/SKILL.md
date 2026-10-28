@@ -4,7 +4,7 @@ description: Add Intertext inline images, GIFs, video, or audio waveforms to web
 license: MIT
 metadata:
   author: davidezhang
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # Intertext
@@ -23,7 +23,7 @@ Use the visitor's own assets or project assets. Studio uploads use temporary `bl
 
 For React, prefer `ArtifactPill` inside semantic text. `InlineArtifactsText` and `InlineArtifactText` are editor/placement controls that render a `div`; use them only when the user wants dragging or editing. They default to movable, so explicitly set `movable={false}` for a display-only wrapper. Do not place their `div` inside a heading or paragraph.
 
-Motion should enhance a complete static composition. Keep essential information available without hover; provide a keyboard/touch control if an action matters. Start audio paused, and play it from an explicit user action. For looping video, include a poster and a pause control, or keep playback opt-in. Respect reduced-motion behavior rather than overriding it to force autoplay.
+Motion should enhance a complete static composition. Keep essential information available without hover; provide a keyboard/touch control if an action matters. A focusable `hover-expand` pill is already its own tap and keyboard toggle. Pair `loop` with a visible pause control. Start audio paused, and play it from an explicit user action. For looping video, include a poster and a pause control, or keep playback opt-in. Respect reduced-motion behavior rather than overriding it to force autoplay.
 
 ## Check the result
 

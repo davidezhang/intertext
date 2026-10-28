@@ -1,6 +1,6 @@
 {
   "name": "intertext-dev",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Responsive inline media pills for the web, with React bindings and draggable text composition.",
   "license": "MIT",
   "repository": {

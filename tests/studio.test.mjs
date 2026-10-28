@@ -61,5 +61,6 @@ test('time and physics springs produce portable CSS with settling time and overs
   const reduced = artifactProps(pill, true, true);
   assert.equal(reduced.hoverExpand, false);
   assert.equal(reduced.expanded, false);
+  assert.equal(reduced.loop, true, 'the runtime keeps loops still under reduced motion, so exports keep the setting');
   assert.equal(reduced.easing, physics.easing);
 });

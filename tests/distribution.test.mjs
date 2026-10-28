@@ -117,6 +117,14 @@ test('website examples and integration guide ship with working local runtime pat
   }
 });
 
+test('docs, skill and examples install the version being built', () => {
+  const examples = readdirSync(new URL('examples/', root)).filter(name => name.endsWith('.html')).map(name => `examples/${name}`);
+  for (const path of ['README.md', 'docs/integration.md', 'skills/intertext/SKILL.md', 'skills/intertext/references/integration.md', ...examples]) {
+    const text = read(path);
+    for (const [reference, version] of text.matchAll(/(?:releases\/|intertext-dev[@-]|version: ")(\d+\.\d+\.\d+)/g)) assert.equal(version, pkg.version, `${path}: ${reference}`);
+  }
+});
+
 test('website skill discovery contains the exact skill, references and license', () => {
   const list = (path, prefix = '') => readdirSync(new URL(path, root), { withFileTypes: true }).flatMap(entry => {
     if (entry.name.startsWith('.')) return [];

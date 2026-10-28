@@ -12,11 +12,24 @@ import ts from 'typescript';
 
 const source = readFileSync(new URL('../src/studio-export.ts', import.meta.url), 'utf8');
 const { outputText } = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
-const { generateExport, createCompositionManifest, createIntegrationPrompt, createPreviewPage, buildCompositionFiles, buildCompositionArchive, createStoredZip } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+const { EXPORT_VERSION, generateExport, createCompositionManifest, createIntegrationPrompt, createPreviewPage, buildCompositionFiles, buildCompositionArchive, createStoredZip } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const versionPattern = version.replaceAll('.', '\\.');
 const font = { id: 'default', name: 'Helvetica Neue', label: 'Default', family: "'Helvetica Neue', Helvetica, Arial, sans-serif", letterSpacing: '-.058em', mobileLetterSpacing: '-.055em' };
 const makeInput = (overrides = {}) => ({ text: 'Designing text interfaces.', artifacts: [{ id: 'a', position: 1, artifact: { src: '/media/concrete.jpg', alt: 'Concrete', width: '3.3em', height: '.85em', hoverExpand: true } }], font, fontSize: 125, dark: true, ...overrides });
 const content = (files, path) => new TextDecoder().decode(files.find(file => file.path === path)?.bytes);
 const mediaName = (bytes, extension) => `media-${createHash('sha256').update(new Uint8Array(bytes)).digest('hex')}.${extension}`;
+const mockPill = 'const ArtifactPill = props => _jsx("artifact-pill", Object.fromEntries(Object.entries(props).map(([key, value]) => [key.replace(/[A-Z]/g, c => "-" + c.toLowerCase()), value === true ? "" : value])));';
+// Run exported HTML against the built browser module, as a visitor's page would.
+const runtime = readFileSync(new URL('../dist/lib/artifact-pill.js', import.meta.url), 'utf8').replace(/export\s*\{[^}]*\};?\s*$/, '');
+function withRuntime(html) {
+  const dom = new JSDOM(html, {
+    runScripts: 'dangerously',
+    beforeParse(window) { window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} }); },
+  });
+  dom.window.eval(runtime);
+  return dom;
+}
 
 test('HTML preserves literal Unicode, whitespace, line breaks and boundary order with escaped text and attributes', () => {
   const text = '  α<&"\n第二  👩🏽‍💻\tend\n';
@@ -37,7 +50,8 @@ test('HTML preserves literal Unicode, whitespace, line breaks and boundary order
   assert.equal(pills[1].hasAttribute('aria-label'), false);
   assert.equal(pills[1].hasAttribute('style'), false);
   assert.equal(pills[2].hasAttribute('paused'), false);
-  assert.match(html, /https:\/\/intertext\.dev\/releases\/0\.1\.0\/artifact-pill\.js/);
+  assert.equal(EXPORT_VERSION, version, 'exports must install the release being built');
+  assert.match(html, new RegExp(`https://intertext\\.dev/releases/${versionPattern}/artifact-pill\\.js`));
   assert.match(html, /--intertext-scale: 1\.25/);
   assert.match(html, /color-scheme: dark/);
 });
@@ -51,7 +65,6 @@ test('generated React compiles and renders the exact composition with direct dis
   assert.match(code, /'use client';/);
   const diagnostics = ts.transpileModule(code, { reportDiagnostics: true, fileName: 'Headline.tsx', compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX } });
   assert.deepEqual(diagnostics.diagnostics, []);
-  const mockPill = 'const ArtifactPill = props => _jsx("artifact-pill", Object.fromEntries(Object.entries(props).map(([key, value]) => [key.replace(/[A-Z]/g, c => "-" + c.toLowerCase()), value === true ? "" : value])));';
   const compiled = diagnostics.outputText
     .replace(/from "react\/jsx-runtime"/g, `from ${JSON.stringify(import.meta.resolve('react/jsx-runtime'))}`)
     .replace(/import \{ ArtifactPill \} from 'intertext-dev\/react';/, mockPill);
@@ -85,9 +98,9 @@ function mockDownloads() {
   const fixtures = {
     '/media/concrete.jpg': { bytes: [255, 216, 255, 10], type: 'image/jpeg' },
     '/media/poster.webp': { bytes: [82, 73, 70, 70, 15], type: 'image/webp' },
-    '/releases/0.1.0/artifact-pill.js': { text: 'customElements.define("artifact-pill", class extends HTMLElement {});', type: 'text/javascript' },
-    '/releases/0.1.0/intertext-dev-0.1.0.tgz': { bytes: [31, 139, 8, 1, 2], type: 'application/gzip' },
-    '/releases/0.1.0/LICENSE': { text: 'MIT License', type: 'text/plain' },
+    [`/releases/${version}/artifact-pill.js`]: { text: 'customElements.define("artifact-pill", class extends HTMLElement {});', type: 'text/javascript' },
+    [`/releases/${version}/intertext-dev-${version}.tgz`]: { bytes: [31, 139, 8, 1, 2], type: 'application/gzip' },
+    [`/releases/${version}/LICENSE`]: { text: 'MIT License', type: 'text/plain' },
     '/media/LICENSE.md': { text: '# Demo media licenses\nUnsplash and Pexels', type: 'text/plain' },
     '/fonts/instrument-serif-latin-400-normal.woff2': { bytes: [119, 79, 70, 50, 1], type: 'font/woff2' },
     '/fonts/instrument-serif-latin-ext-400-normal.woff2': { bytes: [119, 79, 70, 50, 2], type: 'font/woff2' },
@@ -140,9 +153,9 @@ test('React archive includes installable package and correct public media plus l
   const files = await buildCompositionFiles(input, 'react', options);
   const imageName = mediaName([255, 216, 255, 10], 'jpg');
   assert.ok(files.some(file => file.path === `public/media/${imageName}`));
-  assert.ok(files.some(file => file.path === 'intertext-dev-0.1.0.tgz'));
+  assert.ok(files.some(file => file.path === `intertext-dev-${version}.tgz`));
   assert.ok(files.some(file => file.path === 'fonts/InstrumentSerif-OFL.txt'));
-  assert.match(content(files, 'Headline.tsx'), /npm install \.\/intertext-dev-0\.1\.0\.tgz/);
+  assert.match(content(files, 'Headline.tsx'), new RegExp(`npm install \\./intertext-dev-${versionPattern}\\.tgz`));
   assert.match(content(files, 'Headline.tsx'), /import '\.\/fonts\.css'/);
   assert.ok(content(files, 'Headline.tsx').includes(`/media/${imageName}`));
   assert.match(content(files, 'fonts.css'), /\.\/fonts\/instrument-serif-latin-400-normal\.woff2/);
@@ -170,35 +183,78 @@ test('content filenames preserve earlier compositions and deduplicate identical 
   assert.equal(manifest.artifacts[0].artifact.src, manifest.artifacts[1].artifact.src);
 });
 
-test('hover expansion exports focusable media and explicit touch controls without affecting static images', () => {
+test('hover expansion exports focusable media that the runtime toggles by tap or keyboard, without separate buttons', () => {
   const input = makeInput();
-  const dom = new JSDOM(generateExport(input, 'html'), { runScripts: 'dangerously' });
-  const pill = dom.window.document.querySelector('artifact-pill');
-  const button = dom.window.document.querySelector('button');
+  const dom = withRuntime(generateExport(input, 'html'));
+  const { document, KeyboardEvent } = dom.window;
+  const pill = document.querySelector('artifact-pill');
   assert.equal(pill.tabIndex, 0);
   assert.equal(pill.hasAttribute('tab-index'), false);
-  assert.equal(button.getAttribute('aria-expanded'), 'false');
-  assert.equal(button.textContent, 'Expand image');
-  assert.equal(button.getAttribute('aria-label'), 'Expand image: Concrete');
-  button.click();
+  assert.equal(document.querySelector('button'), null, 'the pill itself is the touch and keyboard control');
+  assert.equal(pill.getAttribute('role'), 'button');
+  assert.equal(pill.getAttribute('aria-label'), 'Concrete');
+  assert.equal(pill.getAttribute('aria-expanded'), 'false');
+  pill.click(); // A tap ends with this click; touch pointers never start hover.
   assert.equal(pill.hasAttribute('expanded'), true);
-  assert.equal(button.getAttribute('aria-expanded'), 'true');
-  assert.equal(button.textContent, 'Collapse image');
-  assert.equal(button.getAttribute('aria-label'), 'Collapse image: Concrete');
-  button.click();
+  assert.equal(pill.getAttribute('aria-expanded'), 'true');
+  pill.focus();
+  pill.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
   assert.equal(pill.hasAttribute('expanded'), false);
+  assert.equal(pill.getAttribute('aria-expanded'), 'false');
   dom.window.close();
   const react = generateExport(input, 'react');
   assert.match(react, /tabIndex=\{0\}/);
-  assert.match(react, /expanded=\{Boolean\(expanded\["media-0"\]\)\}/);
-  assert.match(react, /aria-expanded=/);
-  assert.match(react, /setExpanded\(current =>/);
+  assert.match(react, /hoverExpand=\{true\}/);
+  assert.doesNotMatch(react, /useState|aria-expanded| expanded=/);
   const staticInput = makeInput({ artifacts: [{ id: 'static', position: 1, artifact: { src: '/media/concrete.jpg', alt: 'Static' } }] });
   const staticReact = generateExport(staticInput, 'react');
   assert.doesNotMatch(staticReact, /useState|useRef|aria-expanded|tabIndex/);
   const staticHTML = new JSDOM(generateExport(staticInput, 'html')).window.document;
   assert.equal(staticHTML.querySelector('button'), null);
   assert.equal(staticHTML.querySelector('artifact-pill').tabIndex, -1);
+});
+
+test('looping pills export the runtime loop with one pause control that reduced motion hides', async () => {
+  const input = makeInput({ artifacts: [
+    { id: 'a', position: 1, artifact: { src: '/media/concrete.jpg', alt: 'First', loop: true, expanded: true } },
+    { id: 'b', position: 2, artifact: { src: '/media/concrete.jpg', alt: 'Second', loop: true, hoverExpand: true } },
+    { id: 'c', position: 3, artifact: { src: '/media/concrete.jpg', alt: 'Still', loop: false } },
+  ] });
+  const html = generateExport(input, 'html');
+  assert.match(html, /@media \(prefers-reduced-motion: reduce\) \{ \.intertext-loop-control \{ display: none; \} \}/);
+  const dom = withRuntime(html);
+  const pills = [...dom.window.document.querySelectorAll('artifact-pill')];
+  const looping = () => pills.map(pill => pill.hasAttribute('loop'));
+  assert.deepEqual(looping(), [true, true, false]);
+  assert.equal(pills[0].hasAttribute('expanded'), false, 'the studio preview state is not exported');
+  const buttons = dom.window.document.querySelectorAll('button');
+  assert.equal(buttons.length, 1, 'one control pauses every loop');
+  assert.equal(buttons[0].textContent, 'Pause animation');
+  buttons[0].click();
+  assert.deepEqual(looping(), [false, false, false]);
+  assert.equal(buttons[0].textContent, 'Play animation');
+  buttons[0].click();
+  assert.deepEqual(looping(), [true, true, false]);
+  dom.window.close();
+
+  const react = generateExport(input, 'react');
+  assert.equal(react.match(/loop=\{looping\}/g)?.length, 2);
+  const compiled = ts.transpileModule(react, { reportDiagnostics: true, fileName: 'Headline.tsx', compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX } });
+  assert.deepEqual(compiled.diagnostics, []);
+  const runnable = compiled.outputText
+    .replace(/from "react\/jsx-runtime"/g, `from ${JSON.stringify(import.meta.resolve('react/jsx-runtime'))}`)
+    .replace(/from 'react'/g, `from ${JSON.stringify(import.meta.resolve('react'))}`)
+    .replace(/import \{ ArtifactPill \} from 'intertext-dev\/react';/, mockPill);
+  const { default: Headline } = await import(`data:text/javascript;base64,${Buffer.from(runnable).toString('base64')}`);
+  const rendered = new JSDOM(renderToStaticMarkup(React.createElement(Headline))).window.document;
+  assert.deepEqual([...rendered.querySelectorAll('artifact-pill')].map(pill => pill.hasAttribute('loop')), [true, true, false]);
+  assert.equal(rendered.querySelector('button.intertext-loop-control').textContent, 'Pause animation');
+
+  assert.deepEqual(createCompositionManifest(input).artifacts.map(({ artifact }) => artifact.loop), [true, true, undefined]);
+  assert.match(createIntegrationPrompt(input), /pause control for looping media/);
+  const readme = content(await buildCompositionFiles(input, 'html', mockDownloads()), 'README.md');
+  assert.match(readme, /Pause animation button stops looping pills/);
+  assert.doesNotMatch(readme, /loops are omitted/);
 });
 
 test('missing release fails before creating a misleading download', async () => {
@@ -279,7 +335,7 @@ test('generated HTML audio controls play, pause, reflect ended state and announc
 
 test('React media exports compile with visible controls and versioned download install instructions', async () => {
   const code = generateExport(makeInput({ artifacts: [{ id: 'a', position: 1, artifact: { src: '/media/sound.m4a', alt: 'Music', kind: 'audio' } }] }), 'react');
-  assert.match(code, /npm install intertext-dev@0\.1\.0/);
+  assert.match(code, new RegExp(`npm install intertext-dev@${versionPattern}`));
   assert.match(code, /onClick=\{\(\) => void togglePlayback/);
   assert.match(code, /paused=\{true\}/);
   assert.match(code, /aria-live="polite"/);
@@ -319,10 +375,10 @@ test('controls show short labels, keep full descriptions in accessible names and
     { id: 'c', position: 2, artifact: { src: '/media/c.gif', alt: 'Record', kind: 'gif' } },
   ] });
   const buttons = [...new JSDOM(generateExport(input, 'html')).window.document.querySelectorAll('button')];
-  assert.deepEqual(buttons.map(button => button.textContent), ['Play video 1', 'Play video 2', 'Play animation', 'Expand video 1']);
-  assert.deepEqual(buttons.map(button => button.getAttribute('aria-label')), ['Play video 1: First clip', 'Play video 2: Second clip', 'Play animation: Record', 'Expand video 1: First clip']);
+  assert.deepEqual(buttons.map(button => button.textContent), ['Play video 1', 'Play video 2', 'Play GIF']);
+  assert.deepEqual(buttons.map(button => button.getAttribute('aria-label')), ['Play video 1: First clip', 'Play video 2: Second clip', 'Play GIF: Record']);
   const react = generateExport(input, 'react');
-  assert.match(react, /"Expand video 1: First clip"/);
+  assert.match(react, /"Pause video 1: First clip"/);
   assert.match(react, /\? "Pause video 2" : "Play video 2"/);
 });
 
@@ -337,7 +393,7 @@ test('site appearance inherits the page typeface, color and size across HTML, Re
   assert.doesNotMatch(html, /font-family|color-scheme|--intertext-scale|@container|fonts\.googleapis|Instrument Serif/);
   assert.match(html, /--artifact-focus: currentColor/);
   assert.equal(paragraph.querySelector('artifact-pill').getAttribute('width'), '3.3em');
-  assert.equal(document.querySelector('button').textContent, 'Expand image');
+  assert.equal(document.querySelector('button'), null, 'hover pills are their own tap and keyboard control');
 
   const react = generateExport(input, 'react');
   assert.doesNotMatch(react, /CSSProperties|compositionStyle|fonts\.css|Instrument Serif/);
@@ -367,7 +423,7 @@ test('sample-page preview loads media and the runtime from the studio origin and
   ] });
   const html = createPreviewPage(input, 'https://preview.test/studio');
   const document = new JSDOM(html).window.document;
-  assert.equal(document.querySelector('script[type="module"]').getAttribute('src'), 'https://preview.test/releases/0.1.0/artifact-pill.js');
+  assert.equal(document.querySelector('script[type="module"]').getAttribute('src'), `https://preview.test/releases/${EXPORT_VERSION}/artifact-pill.js`);
   const pills = [...document.querySelectorAll('artifact-pill')];
   assert.deepEqual(pills.map(pill => pill.getAttribute('src')), ['https://preview.test/media/concrete.jpg', 'blob:https://preview.test/upload']);
   assert.equal(pills[1].getAttribute('poster'), 'https://preview.test/media/poster.webp');

@@ -16,7 +16,7 @@ npx skills add https://intertext.dev
 
 Then ask your agent to add Intertext inline media to your existing page. The skill handles integration guidance; the website uses the component below. See the [hosted skill instructions](https://intertext.dev/.well-known/agent-skills/intertext/SKILL.md). No repository access is required.
 
-**Distribution:** [intertext-dev](https://www.npmjs.com/package/intertext-dev) is available on npm. The website also provides the same `0.1.0` package through an immutable versioned download.
+**Distribution:** [intertext-dev](https://www.npmjs.com/package/intertext-dev) is available on npm. The website also provides the same `0.1.1` package through an immutable versioned download.
 
 ## Free core and future composition packs
 
@@ -39,7 +39,7 @@ pnpm install
 pnpm dev
 ```
 
-Open the local URL printed by Vite. `pnpm dev` first prepares the reusable release and examples. `pnpm build` builds the studio (`dist/site`) and reusable library (`dist/lib`), including versioned downloads under `public/releases/0.1.0`. `pnpm build:release` builds only the reusable release and example assets. `pnpm check:release` runs the full build, test suite, and a clean-consumer package/SSR smoke check; `pnpm test` runs the tests against an existing build.
+Open the local URL printed by Vite. `pnpm dev` first prepares the reusable release and examples. `pnpm build` builds the studio (`dist/site`) and reusable library (`dist/lib`), including versioned downloads under `public/releases/0.1.1`. `pnpm build:release` builds only the reusable release and example assets. `pnpm check:release` runs the full build, test suite, and a clean-consumer package/SSR smoke check; `pnpm test` runs the tests against an existing build.
 
 For bug reports and contributions, see [CONTRIBUTING.md](CONTRIBUTING.md). Include a minimal reproduction and the browser/framework you used when reporting an integration problem.
 
@@ -53,16 +53,16 @@ The **+** button adds a pill at a random word boundary, preferring an unoccupied
 
 The **UI sounds** toggle in Global settings remembers your choice in this browser. Sounds start with your first interaction: soft thumps for adding/moving pills, opening controls, and playing an animation; short ticks for text edits, slider changes, selections, and export actions. These use the demo film's synthesized noise and bass textures at a restrained volume. Rapid adjustments are rate-limited, muting stops active sounds, and background tabs stay quiet. There is no background music. UI feedback is local to the studio. Audio pills play only on request.
 
-Shape and Motion use [DialKit](https://joshpuckett.me/dialkit) controls embedded in the sidebar. Drag a slider to adjust it, use the arrow keys for fine changes, or focus it and press Enter to type a precise value. Width and height use `em` (relative to the surrounding text); radius uses pixels. Motion shows both starting and target dimensions, with current width and height synchronized with Shape, plus an interactive Bézier editor. **Easing** uses duration and a curve; **Time** uses visual duration and bounce; **Physics** uses stiffness, damping, and mass. Play, hover, and loop use the selected transition. Springs include their settling tail, so their total playback time can exceed the visual duration.
+Shape and Motion use [DialKit](https://joshpuckett.me/dialkit) controls embedded in the sidebar. Drag a slider to adjust it, use the arrow keys for fine changes, or focus it and press Enter to type a precise value. Width and height use `em` (relative to the surrounding text); radius uses pixels. Motion shows both starting and target dimensions, with current width and height synchronized with Shape, plus an interactive Bézier editor. **Easing** uses duration and a curve; **Time** uses visual duration and bounce; **Physics** uses stiffness, damping, and mass. Play, hover, and loop use the selected transition. Springs include their settling tail, so their total playback time can exceed the visual duration. Exports keep loops and add a Pause animation button; hover-expanding pills in exports also toggle when tapped or activated with Enter or Space.
 
 Upload media stays in your browser using an object URL. URL media is fetched directly from the URL you enter. Settings and uploaded files are session-only; export a snippet to retain the configuration. Add the original media file to your own project when using that snippet.
 
 ## Any website: native HTML
 
-Load `https://intertext.dev/releases/0.1.0/artifact-pill.js` directly. For self-hosting, copy the generated `public/releases/0.1.0/artifact-pill.js` and its `LICENSE` into your project, retaining the MIT notice. The module has no React, animation, or CSS dependencies, and importing it registers the element once. Maintainers can also use locally built files.
+Load `https://intertext.dev/releases/0.1.1/artifact-pill.js` directly. For self-hosting, copy the generated `public/releases/0.1.1/artifact-pill.js` and its `LICENSE` into your project, retaining the MIT notice. The module has no React, animation, or CSS dependencies, and importing it registers the element once. Maintainers can also use locally built files.
 
 ```html
-<script type="module" src="https://intertext.dev/releases/0.1.0/artifact-pill.js"></script>
+<script type="module" src="https://intertext.dev/releases/0.1.1/artifact-pill.js"></script>
 
 <h1 style="font-size: clamp(2rem, 7vw, 8rem); line-height: 1.2">
   Designing
@@ -95,10 +95,10 @@ For maintainers with a local source checkout:
 ```sh
 pnpm build:release
 # From the consuming React project:
-pnpm add /absolute/path/to/intertext/public/releases/0.1.0/intertext-dev-0.1.0.tgz
+pnpm add /absolute/path/to/intertext/public/releases/0.1.1/intertext-dev-0.1.1.tgz
 ```
 
-Use your project's package manager and retain the lockfile. You can also install the [versioned website archive](https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz). The npm package named `intertext` is unrelated.
+Use your project's package manager and retain the lockfile. You can also install the [versioned website archive](https://intertext.dev/releases/0.1.1/intertext-dev-0.1.1.tgz). The npm package named `intertext` is unrelated.
 
 React and React DOM are optional peers, required only by the React entry point. The package includes TypeScript declarations. The React bundle preserves `use client` for frameworks using React Server Components. Browser registration occurs in the client bundle; imports are safe during server rendering.
 
@@ -214,9 +214,10 @@ While dragging, the pill follows the exact point you grabbed and the words reflo
 | `duration` | `duration` | CSS duration, e.g. `650ms` |
 | `easing` | `easing` | CSS timing function, `cubic-bezier()`, or `linear()` spring curve |
 | `expanded` | `expanded` | Use the expanded size |
-| `hover-expand` | `hoverExpand` | Expand on hover or visible keyboard focus |
+| `hover-expand` | `hoverExpand` | Expand on hover or visible keyboard focus; tap, click, Enter, or Space toggles `expanded` |
 | `expanded-width` | `expandedWidth` | Expanded width; default `4.2em` |
 | `expanded-height` | `expandedHeight` | Expanded height; default `1.25em` |
+| `loop` | `loop` | Alternate between the base and expanded sizes; remove it to pause |
 | `poster` | `poster` | Video poster image |
 | `paused` | `paused` | Pause audio, video, or show a GIF still; omit to allow video/GIF autoplay |
 | `play-on-hover` | `playOnHover` | Play audio, video, or GIF while hovered; takes precedence over `paused` |
@@ -238,7 +239,9 @@ pill.toggleAttribute('expanded');
 ## Media and accessibility
 
 - Video is muted, inline, and looping. `paused` stops it. Browser autoplay policies may still block playback; supply a poster.
-- Reduced motion disables pill transitions and video autoplay. The studio also disables size loops and hover expansion under reduced motion.
+- Reduced motion disables pill transitions, video autoplay, and `loop`. The studio also disables hover expansion under reduced motion.
+- Touch has no hover, so a `hover-expand` pill is also a toggle button: a tap, a click, or Enter or Space while focused pins `expanded`, and `role="button"`, `aria-expanded`, and an `aria-label` from `alt` describe it. Add `tabindex="0"` for keyboard access. A `role` set by your page, or an enclosing link or button, keeps its own behavior instead.
+- A `loop` that runs longer than five seconds needs a visible way to pause it (WCAG 2.2.2): toggle the attribute from a button. Studio exports include one.
 - Paused GIFs display a still canvas preview. Hover playback reveals the animated image while hovered; GIFs do not resume at an exact timeline position. Reduced motion keeps the still preview.
 - Supply meaningful media descriptions. The studio lets you edit them in Media. Interactive pills expose movement instructions and a live region; static images expose alt text.
 - Failed media shows an inline fallback and emits an `artifact-error` event. Supported video codecs depend on the visitor's browser; MP4/H.264 and WebM are the recommended formats.

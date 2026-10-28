@@ -14,11 +14,12 @@ test('native and React entry points import safely without browser globals', () =
 test('React wrapper emits custom-element attributes for SSR and hydration', () => {
   const html = renderToStaticMarkup(createElement(ArtifactPill, {
     src: '/clip.mp4', alt: 'A garden', kind: 'video', width: 'clamp(2em, 20vw, 5em)',
-    fit: 'fit', playOnHover: true, hoverExpand: true, expandedWidth: '4em', paused: true,
+    fit: 'fit', playOnHover: true, hoverExpand: true, loop: true, expandedWidth: '4em', paused: true,
   }));
   assert.match(html, /<artifact-pill/);
   assert.match(html, /hover-expand=""/);
   assert.match(html, /play-on-hover=""/);
+  assert.match(html, / loop=""/);
   assert.match(html, /expanded-width="4em"/);
   assert.match(html, /paused=""/);
   assert.match(html, /width="clamp\(2em, 20vw, 5em\)"/);
@@ -27,9 +28,9 @@ test('React wrapper emits custom-element attributes for SSR and hydration', () =
 
 test('false boolean props do not accidentally enable native element features', () => {
   const html = renderToStaticMarkup(createElement(ArtifactPill, {
-    src: '/photo.jpg', alt: '', paused: false, playOnHover: false, hoverExpand: false, expanded: false,
+    src: '/photo.jpg', alt: '', paused: false, playOnHover: false, hoverExpand: false, expanded: false, loop: false,
   }));
-  assert.doesNotMatch(html, /paused|hover-expand|play-on-hover| expanded/);
+  assert.doesNotMatch(html, /paused|hover-expand|play-on-hover| expanded| loop/);
 });
 
 function renderText(text, position, movable = true) {

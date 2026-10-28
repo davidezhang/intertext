@@ -16,7 +16,9 @@ const styles = `
     transition-duration: var(--artifact-duration, 500ms);
     transition-timing-function: var(--artifact-easing, cubic-bezier(.22, 1, .36, 1));
   }
-  :host([expanded]), :host([hover-expand][data-hover-active]), :host([hover-expand]:focus-visible) {
+  /* An explicit collapse (data-hover-dismissed) wins over the hover or focus preview until that preview ends. */
+  :host([expanded]), :host([loop][data-loop-expanded]),
+  :host([hover-expand][data-hover-active]:not([data-hover-dismissed])), :host([hover-expand]:not([data-hover-dismissed]):focus-visible) {
     width: var(--artifact-expanded-width, 4.2em); height: var(--artifact-expanded-height, 1.25em);
   }
   :host(:focus-visible) { outline: 2px solid var(--artifact-focus, #000); outline-offset: 4px; }
@@ -42,7 +44,7 @@ const styles = `
 const BaseElement = (typeof HTMLElement === 'undefined' ? class {} : HTMLElement) as typeof HTMLElement;
 
 export class ArtifactPillElement extends BaseElement {
-  static observedAttributes = ['src', 'kind', 'alt', 'fit', 'position', 'poster', 'paused', 'width', 'height', 'radius', 'duration', 'easing', 'expanded-width', 'expanded-height', 'hover-expand', 'play-on-hover', 'data-hover-active'];
+  static observedAttributes = ['src', 'kind', 'alt', 'fit', 'position', 'poster', 'paused', 'width', 'height', 'radius', 'duration', 'easing', 'expanded', 'expanded-width', 'expanded-height', 'hover-expand', 'play-on-hover', 'loop', 'role', 'data-hover-active'];
   private media?: HTMLImageElement | HTMLVideoElement | HTMLAudioElement;
   private waveform?: AudioWaveform;
   private fallback?: HTMLSpanElement;
@@ -50,11 +52,28 @@ export class ArtifactPillElement extends BaseElement {
   private motionQuery?: MediaQueryList;
   private hover?: ReturnType<typeof connectPillHover>;
   private managedProperties = new Set<string>();
+  private ariaDefaults = new Map<string, string>();
+  private toggles = false;
+  private loopTimer?: ReturnType<typeof setTimeout>;
   private audioFrame = 0;
   private displayedAudioTime?: number;
   private observedAudioTime?: number;
   private audioFrameTime?: number;
-  private onMotionChange = () => { this.syncPlayback(); this.syncAudioProgress(true); };
+  private onMotionChange = () => { this.syncPlayback(); this.syncAudioProgress(true); this.syncLoop(); };
+  // Touch has no hover, so activation pins `expanded` like a disclosure button.
+  private toggleExpanded = (event: MouseEvent) => {
+    if (event.defaultPrevented) return;
+    const expanded = !this.hasAttribute('expanded');
+    this.toggleAttribute('data-hover-dismissed', !expanded && (this.hasAttribute('data-hover-active') || this.matches(':focus')));
+    this.toggleAttribute('expanded', expanded);
+  };
+  private toggleFromKeyboard = (event: KeyboardEvent) => {
+    if (!this.toggles || event.defaultPrevented || event.target !== this || event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault(); // Space would otherwise scroll the page.
+    this.click();
+  };
+  private endDismissal = () => this.removeAttribute('data-hover-dismissed');
   private syncAudioProgress = (reset = false) => {
     if (this.audioFrame) cancelAnimationFrame(this.audioFrame);
     this.audioFrame = 0;
@@ -80,6 +99,8 @@ export class ArtifactPillElement extends BaseElement {
     const style = document.createElement('style');
     style.textContent = styles;
     root.append(style);
+    this.addEventListener('keydown', this.toggleFromKeyboard);
+    this.addEventListener('focusout', this.endDismissal);
   }
 
   connectedCallback() {
@@ -88,6 +109,8 @@ export class ArtifactPillElement extends BaseElement {
     this.motionQuery.addEventListener('change', this.onMotionChange);
     const reconnectingWaveform = this.waveform;
     this.update();
+    this.syncToggle();
+    this.syncLoop();
     if (reconnectingWaveform && this.waveform) void this.waveform.load(this.getAttribute('src') || '');
     this.syncAudioProgress();
   }
@@ -96,6 +119,7 @@ export class ArtifactPillElement extends BaseElement {
     this.hover?.disconnect();
     this.hover = undefined;
     this.motionQuery?.removeEventListener('change', this.onMotionChange);
+    this.syncLoop();
     if (this.media instanceof HTMLMediaElement) this.media.pause();
     this.waveform?.disconnect();
     if (this.audioFrame) cancelAnimationFrame(this.audioFrame);
@@ -104,11 +128,15 @@ export class ArtifactPillElement extends BaseElement {
 
   attributeChangedCallback(name: string, previous: string | null, next: string | null) {
     if (name === 'data-hover-active') {
+      if (next === null) this.endDismissal();
       if (this.isConnected && this.hasAttribute('play-on-hover')) this.syncPlayback();
       return;
     }
     if (name === 'hover-expand' || name === 'play-on-hover') this.hover?.update();
     if (!this.isConnected) return;
+    this.syncToggle();
+    if (name === 'loop') this.syncLoop();
+    if (name === 'expanded' || name === 'role' || name === 'loop') return;
     this.update();
     if (name === 'paused' && previous !== null && next === null && !this.hasAttribute('play-on-hover') && this.media instanceof HTMLAudioElement) {
       void this.play().catch(() => {});
@@ -207,6 +235,56 @@ export class ArtifactPillElement extends BaseElement {
     }
   }
   pause() { if (this.media instanceof HTMLMediaElement) this.media.pause(); }
+
+  /** Hover expansion doubles as a button unless the page gives the pill its own role or encloses it in a control. */
+  private syncToggle() {
+    const role = this.getAttribute('role');
+    this.toggles = this.hasAttribute('hover-expand') && (role === null || role === this.ariaDefaults.get('role'))
+      && !this.parentElement?.closest('a[href], button, label, summary');
+    this.setAriaDefault('role', this.toggles ? 'button' : null);
+    // Audio media is hidden from assistive technology, so name every toggle from its description.
+    this.setAriaDefault('aria-label', this.toggles ? this.getAttribute('alt') || null : null);
+    this.setAriaDefault('aria-expanded', this.toggles ? String(this.hasAttribute('expanded')) : null);
+    if (this.toggles) this.addEventListener('click', this.toggleExpanded);
+    else {
+      this.removeEventListener('click', this.toggleExpanded);
+      this.endDismissal();
+    }
+  }
+
+  /** Never replace or remove a value the page supplied. */
+  private setAriaDefault(name: string, value: string | null) {
+    const current = this.getAttribute(name);
+    if (current !== null && current !== this.ariaDefaults.get(name)) { this.ariaDefaults.delete(name); return; }
+    if (value === null) {
+      this.ariaDefaults.delete(name);
+      if (current !== null) this.removeAttribute(name);
+    } else if (current !== value) {
+      this.ariaDefaults.set(name, value);
+      this.setAttribute(name, value);
+    }
+  }
+
+  /** Alternate sizes like the studio's loop preview. Reduced motion keeps the resting size. */
+  private syncLoop() {
+    const looping = Boolean(this.isConnected && this.motionQuery && !this.motionQuery.matches && this.hasAttribute('loop'));
+    if (looping) {
+      if (this.loopTimer === undefined) this.scheduleLoop();
+      return;
+    }
+    clearTimeout(this.loopTimer);
+    this.loopTimer = undefined;
+    this.removeAttribute('data-loop-expanded');
+  }
+
+  private scheduleLoop() {
+    // Each size holds for 750ms after its transition; reading the duration every cycle follows changes.
+    const seconds = parseFloat(getComputedStyle(this).transitionDuration) || 0;
+    this.loopTimer = setTimeout(() => {
+      this.toggleAttribute('data-loop-expanded');
+      this.scheduleLoop();
+    }, seconds * 1000 + 750);
+  }
 
   private syncPlayback() {
     const hoverPlayback = this.hasAttribute('play-on-hover');

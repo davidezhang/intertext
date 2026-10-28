@@ -21,17 +21,20 @@ export interface ArtifactPillProps extends HTMLAttributes<ArtifactPillElement> {
   poster?: string;
   paused?: boolean;
   expanded?: boolean;
+  /** Expand on hover or keyboard focus. Tap, click, Enter or Space toggles `expanded` unless you set a `role`. */
   hoverExpand?: boolean;
   /** Play audio, video, or GIF while the pointer is over the pill. */
   playOnHover?: boolean;
+  /** Alternate between the base and expanded sizes. Set false to pause; reduced motion keeps the base size. */
+  loop?: boolean;
   expandedWidth?: string;
   expandedHeight?: string;
 }
 
-export const ArtifactPill = forwardRef<ArtifactPillElement, ArtifactPillProps>(function ArtifactPill({ expanded, hoverExpand, playOnHover, expandedWidth, expandedHeight, paused, ...props }, ref) {
+export const ArtifactPill = forwardRef<ArtifactPillElement, ArtifactPillProps>(function ArtifactPill({ expanded, hoverExpand, playOnHover, loop, expandedWidth, expandedHeight, paused, ...props }, ref) {
   return createElement('artifact-pill', {
     ...props, ref, expanded: expanded ? '' : undefined,
-    'hover-expand': hoverExpand ? '' : undefined, 'play-on-hover': playOnHover ? '' : undefined, paused: paused ? '' : undefined,
+    'hover-expand': hoverExpand ? '' : undefined, 'play-on-hover': playOnHover ? '' : undefined, loop: loop ? '' : undefined, paused: paused ? '' : undefined,
     'expanded-width': expandedWidth, 'expanded-height': expandedHeight,
   });
 });
@@ -318,7 +321,7 @@ export function InlineArtifactsText({ text, artifacts, onPositionChange, onSelec
     const interactive = movable || Boolean(onSelectArtifact);
     return <ArtifactPill {...artifact} key={`artifact-${id}`} ref={node => { if (node) pillNodes.current.set(id, node); else pillNodes.current.delete(id); }}
       width={activeDrag ? `${activeDrag.width}px` : artifact.width} height={activeDrag ? `${activeDrag.height}px` : artifact.height}
-      expanded={activeDrag ? false : artifact.expanded} hoverExpand={activeDrag ? false : artifact.hoverExpand} playOnHover={activeDrag ? false : artifact.playOnHover}
+      expanded={activeDrag ? false : artifact.expanded} hoverExpand={activeDrag ? false : artifact.hoverExpand} playOnHover={activeDrag ? false : artifact.playOnHover} loop={activeDrag ? false : artifact.loop}
       duration={activeDrag ? '0ms' : artifact.duration}
       tabIndex={interactive ? 0 : artifact.tabIndex} role={interactive ? 'button' : artifact.role}
       aria-label={artifact['aria-label'] || (interactive ? `${onSelectArtifact ? 'Edit' : 'Move'} artifact: ${artifact.alt}` : undefined)}

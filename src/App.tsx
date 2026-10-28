@@ -113,7 +113,7 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
             <div className="dial-stack"><Toggle label="Animate on hover" checked={hover} onChange={setHover} />
             <Toggle label="Loop animation" checked={loop} onChange={value => onChange({ loop: value, expanded: false })} /></div>
             <button className="primary-button full-width" data-ui-sound="thump" onClick={animate} disabled={reducedMotion || loop}><Play size={13} fill="currentColor" /> Play animation <span>↗</span></button>
-            <p className="control-hint">{reducedMotion ? 'Reduced motion is enabled on your device.' : 'Changes width and height with text reflow.'}</p>
+            <p className="control-hint">{reducedMotion ? 'Reduced motion is enabled on your device.' : loop ? 'Exports include a button to pause the loop.' : 'Changes width and height with text reflow.'}</p>
         </ControlSection>
   </>;
 }
@@ -151,7 +151,6 @@ export default function App() {
   const selected = pills.find(pill => pill.id === selectedId);
   const artifacts = pills.map(pill => ({ id: pill.id, position: pill.position, artifact: artifactProps(pill, dark, reducedMotion) }));
   const exportComposition = { text, artifacts: pills.map(pill => ({ id: pill.id, position: pill.position, artifact: artifactProps(pill, dark, false) })), font, fontSize, dark };
-  const loopKey = JSON.stringify(pills.filter(pill => pill.loop).map(pill => [pill.id, pill.duration]));
 
   function updatePill(id: string, patch: Partial<PillConfig>) {
     setPills(current => current.map(pill => pill.id === id ? { ...pill, ...patch } : pill));
@@ -182,14 +181,6 @@ export default function App() {
     const sync = () => setReducedMotion(query.matches); sync();
     query.addEventListener('change', sync); return () => query.removeEventListener('change', sync);
   }, []);
-  useEffect(() => {
-    if (reducedMotion) return;
-    const looping: [string, number][] = JSON.parse(loopKey);
-    const timers = looping.map(([id, duration]) => setInterval(() => {
-      setPills(current => current.map(pill => pill.id === id ? { ...pill, expanded: !pill.expanded } : pill));
-    }, duration + 750));
-    return () => timers.forEach(clearInterval);
-  }, [loopKey, reducedMotion]);
   useEffect(() => {
     const used = new Set(pills.map(pill => pill.media.src).filter(src => src.startsWith('blob:')));
     uploadUrls.current.forEach(src => { if (!used.has(src)) URL.revokeObjectURL(src); });

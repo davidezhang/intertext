@@ -1,0 +1,21 @@
+{
+  "name": "intertext-dev",
+  "version": "0.1.1",
+  "files": {
+    "artifact-pill.js": {
+      "url": "/releases/0.1.1/artifact-pill.js",
+      "bytes": 22650,
+      "sha256": "aef8081c22b5c74ae7b117359697fa6a89df2b22b74b6074413c5623ad5ef5f1"
+    },
+    "LICENSE": {
+      "url": "/releases/0.1.1/LICENSE",
+      "bytes": 1069,
+      "sha256": "f1be18d57e56efadebd2af21cb4db7f850ac4506fc5d48406d3738cb77221b69"
+    },
+    "intertext-dev-0.1.1.tgz": {
+      "url": "/releases/0.1.1/intertext-dev-0.1.1.tgz",
+      "bytes": 26217,
+      "sha256": "f61420d294399af1a8df8fa71cccb0b4f241815e0c959e507f71f6031ad15e8c"
+    }
+  }
+}

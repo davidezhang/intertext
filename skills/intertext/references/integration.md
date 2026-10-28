@@ -1,19 +1,19 @@
-# Intertext integration reference — 0.1.0
+# Intertext integration reference — 0.1.1
 
 ## Installation
 
-The canonical npm package is `intertext-dev`; its React entry is `intertext-dev/react`. This reference describes version 0.1.0:
+The canonical npm package is `intertext-dev`; its React entry is `intertext-dev/react`. This reference describes version 0.1.1:
 
 ```sh
-npm install intertext-dev@0.1.0
+npm install intertext-dev@0.1.1
 ```
 
-Use the destination's package manager and retain its lockfile. The identical archive is available at https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz, and studio download kits include the local runtime or package. Report failed installations rather than claiming success. For a source checkout, build it and install the generated archive by absolute path. Do not install the unrelated `intertext` package.
+Use the destination's package manager and retain its lockfile. The identical archive is available at https://intertext.dev/releases/0.1.1/intertext-dev-0.1.1.tgz, and studio download kits include the local runtime or package. Report failed installations rather than claiming success. For a source checkout, build it and install the generated archive by absolute path. Do not install the unrelated `intertext` package.
 
 Plain HTML needs only the browser module, with no React or external CSS:
 
 ```html
-<script type="module" src="https://intertext.dev/releases/0.1.0/artifact-pill.js"></script>
+<script type="module" src="https://intertext.dev/releases/0.1.1/artifact-pill.js"></script>
 <h1 style="font-size:clamp(2.5rem,7vw,7rem);line-height:1.15">
   Spaces for <artifact-pill src="/media/studio.jpg" alt="Sunlit studio with large windows" width="2.8em" height=".85em" fit="crop"></artifact-pill> new ideas.
 </h1>
@@ -60,7 +60,8 @@ Keep the parent site's styles. In Next.js, a component with hooks, refs, or even
 | `duration`, `easing` | same | CSS time and timing function. |
 | `expanded` | same | Boolean; use the target size. |
 | `expanded-width`, `expanded-height` | `expandedWidth`, `expandedHeight` | CSS lengths for expanded state. |
-| `hover-expand` | `hoverExpand` | Expand on hover or visible keyboard focus. Add `tabindex="0"` / `tabIndex={0}` if keyboard focus is needed. |
+| `hover-expand` | `hoverExpand` | Expand on hover or visible keyboard focus. Tap, click, Enter, or Space toggles `expanded`, and the element gets `role="button"`, `aria-expanded`, and an `aria-label` from `alt`. A `role` you set, or an enclosing link or button, keeps its own behavior instead. Add `tabindex="0"` / `tabIndex={0}` so keyboard users can reach it. |
+| `loop` | same | Boolean; alternate between the base and expanded sizes. Reduced motion keeps the base size. Removing it pauses the loop at the base size; looping longer than five seconds needs a visible pause control (WCAG 2.2.2). |
 | `poster` | same | Video poster URL. |
 | `paused` | same | Boolean; keep video paused or GIF still. Audio also accepts this state. |
 | `play-on-hover` | `playOnHover` | Boolean; hover playback takes precedence over `paused`. Keep important actions available to touch and keyboard. |
@@ -72,6 +73,8 @@ The component is an inline-block capped at the container width. Its shadow media
 ## Media and motion
 
 Video is muted, looping, and inline. Provide `poster` and either a pause control or opt-in playback. Reduced motion disables autoplay and transitions. GIFs use a still preview when paused or reduced motion is requested. The element exposes `play(): Promise<void>` and `pause()` for audio/video. Call `play()` from a user action and handle rejection; `artifact-playback-error` reports blocked playback. Failed media emits `artifact-error` and displays a fallback.
+
+A looping pill moves on its own, so pair `loop` with a visible button that toggles the attribute, for example `pill.toggleAttribute('loop')` labeled Pause animation / Play animation. Studio exports include this control and hide it under reduced motion, when loops stay still.
 
 Audio stays silent initially. Remote audio requires CORS for waveform decoding; use a same-origin URL where possible. Its theme variables are `--artifact-audio-background`, `--artifact-audio-color`, and `--artifact-audio-progress`. Do not use an audio waveform as a substitute for text information.
 
