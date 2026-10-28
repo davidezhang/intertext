@@ -101,7 +101,7 @@ These are free starter compositions. Replace their illustrative copy and media b
 
 ## Bring a studio composition
 
-Open **Global settings → Export** in the studio (or press <kbd>E</kbd>) to copy HTML or React, copy an agent prompt, or download a complete kit. The ZIP includes your code, uploaded and sample media, a local runtime or package, and setup instructions. Follow its README to place those files in your project. External media URLs stay external.
+Open **Global settings → Export** in the studio (or press <kbd>E</kbd>) to copy HTML or React, copy an agent prompt, or download a complete kit. **Style** sets how the composition meets your page: **Match site**, the default, takes your page's typeface, color and heading size, and the `em`-sized pills follow it; **Studio** brings the studio's typeface, colors and responsive size. **Element** sets the semantic tag: H1, H2 or a paragraph. Media controls show short labels such as “Play video”, and their accessible names include the media description. The ZIP includes your code, uploaded and sample media, a local runtime or package, and setup instructions. Follow its README to place those files in your project. External media URLs stay external.
 
 A copied snippet or composition JSON stores configuration, not uploaded file bytes. Uploads use temporary `blob:` URLs in the studio; the kit replaces them with real local paths. Download the kit when your composition includes uploads, and never publish browser-session URLs. Keep the exported dimensions, fitting, and motion settings while adapting the semantic text container to your page.
 
