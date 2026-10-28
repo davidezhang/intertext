@@ -13,6 +13,8 @@ pnpm check:release
 
 Version 0.1.0 is frozen in `releases/0.1.0/`: its browser module, package archive, MIT license, and `release.json` were downloaded from the public deployment and verified against its SHA-256 hashes. These exact bytes are the release record. Do not recreate or edit them. Generated files under `public/releases/` may be rebuilt from those snapshots.
 
+Version 0.1.1 adds tap and keyboard toggling for `hover-expand` pills and the `loop` attribute. It is frozen in `releases/0.1.1/` from a tested local candidate and has not been deployed or published yet; step 4 of the freeze procedure below is the maintainer's remaining step.
+
 For the current frozen version, the build compares every generated `dist/lib` file, the license, runtime package metadata, and installation hooks against the frozen package. A mismatch fails with a version-bump instruction before replacing generated downloads. README text, descriptive package metadata, and development scripts may change without repacking the frozen release. Such source updates therefore do not alter an already published package's README or metadata.
 
 Install the generated tarball into a separate React project and verify `intertext-dev` and `intertext-dev/react` imports before releasing. Open the HTML recipes through an HTTP server, including at phone width. Skill format validation is separate from package tests; the skill also needs a realistic integration check in a clean consumer project.

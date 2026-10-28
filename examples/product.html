@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">
-  <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
+  <script type="module" src="../releases/0.1.1/artifact-pill.js"></script>
   <style>
     :root { color-scheme: dark; --blue: #2335f4; --deep: #1726c9; --fg: #fff; --soft: rgba(255, 255, 255, .72); --rule: rgba(255, 255, 255, .28); color: var(--fg); background: var(--blue); font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; }
     * { box-sizing: border-box; }
@@ -91,13 +91,15 @@
     await customElements.whenDefined('artifact-pill');
     const pill = document.querySelector('#chair');
     const button = document.querySelector('#detail-toggle');
-    // Hover enlarges the photo with a pointer; this button does the same for touch and keyboard.
-    button.hidden = false;
-    button.addEventListener('click', () => {
-      const expanded = pill.toggleAttribute('expanded');
+    // Tapping the photo also toggles `expanded`, so the button follows the pill's state.
+    const render = () => {
+      const expanded = pill.hasAttribute('expanded');
       button.setAttribute('aria-expanded', String(expanded));
       button.textContent = expanded ? 'Restore the chair' : 'Enlarge the chair';
-    });
+    };
+    new MutationObserver(render).observe(pill, { attributes: true, attributeFilter: ['expanded'] });
+    button.hidden = false;
+    button.addEventListener('click', () => pill.toggleAttribute('expanded'));
   </script>
 </body>
 </html>

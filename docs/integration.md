@@ -4,7 +4,7 @@ Intertext adds images, GIFs, silent video, and audio waveforms between words. A 
 
 ## Choose an integration
 
-**intertext-dev 0.1.0** is available on [npm](https://www.npmjs.com/package/intertext-dev) and as a versioned website download. Use the skill with a coding agent, import the browser module in HTML, or install the package in a React project. You do not need an account to install or use Intertext.
+**intertext-dev 0.1.1** is available on [npm](https://www.npmjs.com/package/intertext-dev) and as a versioned website download. Use the skill with a coding agent, import the browser module in HTML, or install the package in a React project. You do not need an account to install or use Intertext.
 
 The skill is discovered from the website’s `/.well-known/agent-skills/` endpoint. Installing it gives an agent integration instructions; it does not add the runtime to your site automatically.
 
@@ -27,7 +27,7 @@ The skill supports agents implementing the Agent Skills format, including Codex,
 Load the canonical browser module once. This example is a complete static composition; it needs no framework, additional CSS library, or hosted account.
 
 ```html
-<script type="module" src="https://intertext.dev/releases/0.1.0/artifact-pill.js"></script>
+<script type="module" src="https://intertext.dev/releases/0.1.1/artifact-pill.js"></script>
 
 <h1 class="intro">
   Building
@@ -46,7 +46,7 @@ Load the canonical browser module once. This example is a complete static compos
 </style>
 ```
 
-Replace the media path with a file in your project. For self-hosting, download the [browser module](https://intertext.dev/releases/0.1.0/artifact-pill.js) and [MIT license](https://intertext.dev/releases/0.1.0/LICENSE) into your public assets, then change the script URL to your local path. The studio’s HTML kit includes both files. Preserve the MIT notice. In a bundler, importing `intertext-dev` registers the same element. Frameworks may need their normal custom-element configuration. A website builder must allow custom JavaScript and custom HTML; check the published page as well as its editor preview.
+Replace the media path with a file in your project. For self-hosting, download the [browser module](https://intertext.dev/releases/0.1.1/artifact-pill.js) and [MIT license](https://intertext.dev/releases/0.1.1/LICENSE) into your public assets, then change the script URL to your local path. The studio’s HTML kit includes both files. Preserve the MIT notice. In a bundler, importing `intertext-dev` registers the same element. Frameworks may need their normal custom-element configuration. A website builder must allow custom JavaScript and custom HTML; check the published page as well as its editor preview.
 
 ## React and Next.js
 
@@ -59,10 +59,10 @@ npm install intertext-dev
 If you have a local source checkout, you can instead install its built archive:
 
 ```sh
-npm install /absolute/path/to/intertext/public/releases/0.1.0/intertext-dev-0.1.0.tgz
+npm install /absolute/path/to/intertext/public/releases/0.1.1/intertext-dev-0.1.1.tgz
 ```
 
-Use your project's package manager and retain the lockfile. The same package is also available as a [versioned archive](https://intertext.dev/releases/0.1.0/intertext-dev-0.1.0.tgz). Do not install `intertext`: that name belongs to an unrelated package.
+Use your project's package manager and retain the lockfile. The same package is also available as a [versioned archive](https://intertext.dev/releases/0.1.1/intertext-dev-0.1.1.tgz). Do not install `intertext`: that name belongs to an unrelated package.
 
 ```tsx
 import { ArtifactPill } from 'intertext-dev/react';
@@ -107,6 +107,6 @@ A copied snippet or composition JSON stores configuration, not uploaded file byt
 
 ## Check before shipping
 
-Keep the sentence meaningful as text. Add useful media descriptions, use `em` dimensions, and check wrapping on a narrow phone and desktop. Include a video poster. Use `paused` for opt-in playback and a real button for meaningful actions; hover alone is not available on every device. Audio should start from a user gesture. The component honors reduced motion for transitions and autoplay. Verify media URLs, keyboard focus, touch controls, and the destination's build/hydration checks.
+Keep the sentence meaningful as text. Add useful media descriptions, use `em` dimensions, and check wrapping on a narrow phone and desktop. Include a video poster. Use `paused` for opt-in playback and a real button for meaningful actions; hover alone is not available on every device. A `hover-expand` pill handles this itself: tapping it, or pressing Enter or Space while it has focus, toggles its expanded size, and it reports the state with `aria-expanded`. Give it `tabindex="0"`. If you add `loop`, add a visible button that toggles the attribute so visitors can pause it. Audio should start from a user gesture. The component honors reduced motion for transitions, autoplay, and loops. Verify media URLs, keyboard focus, touch controls, and the destination's build/hydration checks.
 
 The [integration API reference](https://intertext.dev/.well-known/agent-skills/intertext/references/integration.md) lists attributes, CSS variables, audio behavior, and the optional controlled editing APIs.

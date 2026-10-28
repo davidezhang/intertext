@@ -41,7 +41,7 @@ export function artifactProps(pill: PillConfig, dark: boolean, reducedMotion: bo
     width: `${pill.width}em`, height: `${pill.height}em`, radius: `${pill.radius}px`, fit: pill.fit,
     position: `${pill.focalX}% ${pill.focalY}%`, duration: `${pill.duration}ms`, easing: pill.easing,
     hoverExpand: pill.hover && !reducedMotion, expanded: pill.expanded && !reducedMotion,
-    expandedWidth: `${pill.expandedWidth}em`, expandedHeight: `${pill.expandedHeight}em`, paused: pill.paused, playOnHover: pill.playOnHover,
+    expandedWidth: `${pill.expandedWidth}em`, expandedHeight: `${pill.expandedHeight}em`, paused: pill.paused, playOnHover: pill.playOnHover, loop: pill.loop,
     'aria-label': `Edit ${pill.name.toLowerCase()}: ${pill.media.alt}`,
     style: { '--artifact-focus': dark ? '#fff' : '#000' } as CSSProperties,
   };

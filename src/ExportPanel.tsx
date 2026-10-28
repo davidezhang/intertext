@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { ArrowDownToLine, ArrowUpRight, Check, Copy } from 'lucide-react';
 import { Folder } from 'dialkit';
-import { createIntegrationPrompt, createPreviewPage, downloadComposition, generateExport, type ExportComposition } from './studio-export';
+import { createIntegrationPrompt, createPreviewPage, downloadComposition, EXPORT_VERSION, generateExport, type ExportComposition } from './studio-export';
 import { studioSounds } from './studio-sound';
 
 type Method = 'agent' | 'react' | 'html';
@@ -217,7 +217,7 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
     <nav className="export-links" aria-label="Intertext resources">
       <a href="/docs/integration.md" target="_blank" rel="noreferrer">Docs<ArrowUpRight size={11} aria-hidden="true" /></a>
       <a href="https://github.com/davidezhang/intertext" target="_blank" rel="noreferrer">GitHub<ArrowUpRight size={11} aria-hidden="true" /></a>
-      <a href="/releases/0.1.0/LICENSE" target="_blank" rel="noreferrer">MIT license<ArrowUpRight size={11} aria-hidden="true" /></a>
+      <a href={`/releases/${EXPORT_VERSION}/LICENSE`} target="_blank" rel="noreferrer">MIT license<ArrowUpRight size={11} aria-hidden="true" /></a>
     </nav>
   </div>;
 }
