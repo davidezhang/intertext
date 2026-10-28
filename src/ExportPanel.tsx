@@ -1,7 +1,8 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
-import { ArrowDownToLine, ArrowUpRight, Check, Copy } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpRight, Check, Copy, FolderOpen } from 'lucide-react';
 import { Folder } from 'dialkit';
 import { createIntegrationPrompt, createPreviewPage, downloadComposition, EXPORT_VERSION, generateExport, type ExportComposition } from './studio-export';
+import { missingMediaNote, readCompositionFile, type StudioComposition } from './studio-persistence';
 import { studioSounds } from './studio-sound';
 
 type Method = 'agent' | 'react' | 'html';
@@ -95,7 +96,9 @@ function MethodPicker({ value, onChange }: { value: Method; onChange: (method: M
   </div>;
 }
 
-export function ExportPanel({ composition }: { composition: ExportComposition }) {
+export function ExportPanel({ composition, missingMedia, autosave, onOpen }: {
+  composition: ExportComposition; missingMedia: string[]; autosave: boolean; onOpen: (composition: StudioComposition) => void;
+}) {
   const [method, setMethod] = useState<Method>('agent');
   // Most compositions join an existing design, so exports take the page's typography by default.
   const [appearance, setAppearance] = useState<Appearance>('site');
@@ -104,12 +107,18 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [opened, setOpened] = useState('');
+  const [openError, setOpenError] = useState('');
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const previewURL = useRef<string | undefined>(undefined);
   const input: ExportComposition = { ...composition, appearance, tag };
+  const openInput = useRef<HTMLInputElement>(null);
+  const openHint = useId();
   const hasUploads = composition.artifacts.some(({ artifact }) => [artifact.src, artifact.poster].some(src => src?.startsWith('blob:')));
+  // Placeholders must never ship, so exports wait until missing media is uploaded again.
+  const blocked = missingMedia.length > 0;
   const format = method === 'html' ? 'html' : 'react';
-  const code = method === 'agent' ? '' : generateExport(input, format);
+  const code = method === 'agent' || blocked ? '' : generateExport(input, format);
   const lines = code.split('\n').length;
 
   useEffect(() => () => {
@@ -155,6 +164,17 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
     previewURL.current = URL.createObjectURL(new Blob([createPreviewPage(input, location.href)], { type: 'text/html' }));
     window.open(previewURL.current, '_blank', 'noopener');
   }
+  async function open(file?: File) {
+    if (!file) return;
+    setOpened(''); setOpenError('');
+    try {
+      const next = await readCompositionFile(file);
+      onOpen(next);
+      setOpened(`Opened ${file.name}. ${missingMediaNote(next.pills)}`.trim());
+    } catch (reason) {
+      setOpenError(reason instanceof Error ? reason.message : 'The composition could not be opened. Please try again.');
+    }
+  }
 
   // "Copied" appears on the step's label line, so confirming never changes the row's size.
   function step(title: string, row: Copyable, extra?: ReactNode) {
@@ -180,28 +200,42 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
       <ChoiceRow label="Element" options={tags} value={tag} onChange={setOption(setTag)} />
     </div>
     <p className="control-hint">{appearance === 'site' ? 'Uses your page’s fonts, colors and size.' : 'Brings the studio’s fonts, colors and size.'} {elementHints[tag]}</p>
-    <button type="button" className="text-button export-sample" onClick={openPreview}>
+    <button type="button" className="text-button export-sample" disabled={blocked} onClick={openPreview}>
       Preview on a sample page<ArrowUpRight size={12} aria-hidden="true" /><span className="visually-hidden"> (opens in a new tab)</span>
     </button>
     <ol className={`export-steps${method === 'html' ? '' : ' is-numbered'}`}>
       {method === 'agent' && <>
         {step('Add the Intertext skill to your project', { label: 'Install command', value: skillCommand, content: skillCommand, code: true })}
-        {step('Ask your agent to add this composition', { label: 'Agent prompt', value: createIntegrationPrompt(input), content: 'Agent prompt', meta: 'with layout data' })}
+        {step('Ask your agent to add this composition', { label: 'Agent prompt', value: blocked ? '' : createIntegrationPrompt(input), content: 'Agent prompt', meta: 'with layout data', disabled: blocked })}
       </>}
       {method === 'react' && <>
         {step('Install the package', { label: 'Install command', value: packageCommand, content: packageCommand, code: true })}
-        {step('Add the component', { label: 'Component code', value: code, content: 'Headline.tsx', meta: `${lines} lines`, disabled: hasUploads }, <>{preview}{uploadHint}</>)}
+        {step('Add the component', { label: 'Component code', value: code, content: 'Headline.tsx', meta: blocked ? undefined : `${lines} lines`, disabled: hasUploads || blocked }, <>{!blocked && preview}{uploadHint}</>)}
       </>}
-      {method === 'html' && step('Paste into any page', { label: 'HTML snippet', value: code, content: 'HTML snippet', meta: `${lines} lines`, disabled: hasUploads }, <>{preview}{uploadHint}</>)}
+      {method === 'html' && step('Paste into any page', { label: 'HTML snippet', value: code, content: 'HTML snippet', meta: blocked ? undefined : `${lines} lines`, disabled: hasUploads || blocked }, <>{!blocked && preview}{uploadHint}</>)}
     </ol>
-    <button type="button" className="primary-button full-width export-download" disabled={busy} onClick={() => void download()}>
+    <button type="button" className="primary-button full-width export-download" disabled={busy || blocked} onClick={() => void download()}>
       <ArrowDownToLine size={14} />{busy ? 'Preparing…' : method === 'agent' ? 'Download kit' : `Download ${method === 'html' ? 'HTML' : 'React'} kit`}<span>ZIP</span>
     </button>
-    <p className="control-hint">{method === 'agent'
-      ? hasUploads ? 'Attach the kit for your agent. It carries your uploaded media.' : 'Optional for your agent: code, media and a local runtime.'
+    <p className="control-hint">{blocked ? `Upload the missing media for ${new Intl.ListFormat('en').format(missingMedia)} to export.`
+      : method === 'agent' ? hasUploads ? 'Attach the kit for your agent. It carries your uploaded media.' : 'Optional for your agent: code, media and a local runtime.'
       : 'Code, media and setup notes. Free for personal and commercial sites.'}</p>
     {error && <p className="error-text" role="alert">{error}</p>}
     <span className="visually-hidden" role="status" aria-live="polite">{status}</span>
+
+    <div className="panel-rule" />
+    <span className="field-heading">Reopen a kit</span>
+    {/* DialKit's row surface, shared with the copy actions above. */}
+    <button type="button" className="copy-row" aria-describedby={openHint} onClick={() => openInput.current?.click()}>
+      <span className="copy-row-text">Open composition</span>
+      <span className="copy-row-meta" aria-hidden="true">composition.json</span>
+      <span className="copy-row-icon" aria-hidden="true"><FolderOpen size={14} /></span>
+    </button>
+    <input ref={openInput} className="visually-hidden" type="file" accept=".json,application/json" tabIndex={-1} aria-label="Open composition file"
+      onChange={event => { void open(event.target.files?.[0]); event.target.value = ''; }} />
+    <p id={openHint} className="control-hint" aria-live="polite">{opened || 'Choose composition.json from a downloaded kit to keep editing. It replaces the current composition.'}</p>
+    {openError && <p className="error-text" role="alert">{openError}</p>}
+    {!autosave && <p className="control-hint">Autosave is unavailable in this browser. Download a kit to keep your work.</p>}
 
     <div className="panel-rule" />
     <span className="field-heading">Examples</span>
