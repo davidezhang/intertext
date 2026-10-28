@@ -1,13 +1,22 @@
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { ArrowDownToLine, ArrowUpRight, Check, Copy } from 'lucide-react';
 import { Folder } from 'dialkit';
-import { createIntegrationPrompt, downloadComposition, generateExport, type ExportComposition } from './studio-export';
+import { createIntegrationPrompt, createPreviewPage, downloadComposition, generateExport, type ExportComposition } from './studio-export';
 import { studioSounds } from './studio-sound';
 
 type Method = 'agent' | 'react' | 'html';
-const methods: readonly { id: Method; label: string }[] = [
+type Appearance = NonNullable<ExportComposition['appearance']>;
+type Tag = NonNullable<ExportComposition['tag']>;
+type Choices<T> = readonly { id: T; label: string }[];
+const methods: Choices<Method> = [
   { id: 'agent', label: 'Agent' }, { id: 'react', label: 'React' }, { id: 'html', label: 'HTML' },
 ];
+const appearances: Choices<Appearance> = [{ id: 'site', label: 'Match site' }, { id: 'studio', label: 'Studio' }];
+const tags: Choices<Tag> = [{ id: 'h1', label: 'H1' }, { id: 'h2', label: 'H2' }, { id: 'p', label: 'Paragraph' }];
+const elementHints: Record<Tag, string> = {
+  h1: 'Use H1 once, for the page’s main headline.', h2: 'H2 suits a section heading.', p: 'Paragraph suits body text.',
+};
+type Copyable = { label: string; value: string; content: ReactNode; code?: boolean; meta?: string; disabled?: boolean };
 const skillCommand = 'npx skills add https://intertext.dev';
 const packageCommand = 'npm install intertext-dev';
 // Thumbnails echo each starter's own typeface, palette and pill shape.
@@ -38,20 +47,47 @@ const examples: readonly Example[] = [
     pill: { width: '2.2em', height: '1.1em', borderRadius: 3, verticalAlign: '-.3em' } },
 ];
 
+/** Arrow keys, Home and End move a radio group's selection, as in DialKit's segmented controls. */
+function selectWithKeys<T>(event: KeyboardEvent<HTMLDivElement>, options: Choices<T>, value: T, onChange: (value: T) => void) {
+  const direction = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+  if (direction === undefined && event.key !== 'Home' && event.key !== 'End') return;
+  event.preventDefault();
+  const selected = options.findIndex(option => option.id === value);
+  const index = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1
+    : (selected + direction! + options.length) % options.length;
+  event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')[index]?.focus();
+  onChange(options[index].id);
+}
+
+/** DialKit's labeled segmented row. Its pill is measured, like DialKit's own toggles. */
+function ChoiceRow<T extends string>({ label, options, value, onChange }: {
+  label: string; options: Choices<T>; value: T; onChange: (value: T) => void;
+}) {
+  const labelId = useId();
+  const group = useRef<HTMLDivElement>(null);
+  const [pill, setPill] = useState<{ left: number; width: number; animate: boolean } | null>(null);
+  useLayoutEffect(() => {
+    const active = group.current?.querySelector<HTMLElement>('[data-active="true"]');
+    if (active) setPill(current => ({ left: active.offsetLeft, width: active.offsetWidth, animate: current !== null }));
+  }, [value]);
+  return <div className="dialkit-labeled-control">
+    <span className="dialkit-labeled-control-label" id={labelId}>{label}</span>
+    <div ref={group} className="dialkit-segmented" role="radiogroup" aria-labelledby={labelId} data-ui-sound="none"
+      onKeyDown={event => selectWithKeys(event, options, value, onChange)}>
+      {pill && <span className="dialkit-segmented-pill" aria-hidden="true" style={{ left: pill.left, width: pill.width,
+        transition: pill.animate ? 'left .2s cubic-bezier(.25, 1, .5, 1), width .2s cubic-bezier(.25, 1, .5, 1)' : 'none' }} />}
+      {options.map(option => <button key={option.id} type="button" role="radio" className="dialkit-segmented-button"
+        data-active={option.id === value} aria-checked={option.id === value} tabIndex={option.id === value ? 0 : -1}
+        onClick={() => { if (option.id !== value) onChange(option.id); }}>{option.label}</button>)}
+    </div>
+  </div>;
+}
+
 /** DialKit's segmented surface, with radio-group keyboard navigation like the font picker. */
 function MethodPicker({ value, onChange }: { value: Method; onChange: (method: Method) => void }) {
   const selectedIndex = methods.findIndex(method => method.id === value);
-  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const direction = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
-    if (direction === undefined && event.key !== 'Home' && event.key !== 'End') return;
-    event.preventDefault();
-    const index = event.key === 'Home' ? 0 : event.key === 'End' ? methods.length - 1
-      : (selectedIndex + direction! + methods.length) % methods.length;
-    event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]')[index]?.focus();
-    onChange(methods[index].id);
-  }
   return <div className="export-methods dialkit-segmented" role="radiogroup" aria-label="Export method" data-ui-sound="none"
-    onKeyDown={handleKeyDown} style={{ '--choice-count': methods.length, '--choice-index': selectedIndex } as CSSProperties}>
+    onKeyDown={event => selectWithKeys(event, methods, value, onChange)} style={{ '--choice-count': methods.length, '--choice-index': selectedIndex } as CSSProperties}>
     <span className="dialkit-segmented-pill" aria-hidden="true" />
     {methods.map(method => <button key={method.id} type="button" role="radio" className="dialkit-segmented-button"
       data-active={method.id === value} aria-checked={method.id === value} tabIndex={method.id === value ? 0 : -1}
@@ -61,17 +97,25 @@ function MethodPicker({ value, onChange }: { value: Method; onChange: (method: M
 
 export function ExportPanel({ composition }: { composition: ExportComposition }) {
   const [method, setMethod] = useState<Method>('agent');
+  // Most compositions join an existing design, so exports take the page's typography by default.
+  const [appearance, setAppearance] = useState<Appearance>('site');
+  const [tag, setTag] = useState<Tag>('h1');
   const [copied, setCopied] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const previewURL = useRef<string | undefined>(undefined);
+  const input: ExportComposition = { ...composition, appearance, tag };
   const hasUploads = composition.artifacts.some(({ artifact }) => [artifact.src, artifact.poster].some(src => src?.startsWith('blob:')));
   const format = method === 'html' ? 'html' : 'react';
-  const code = method === 'agent' ? '' : generateExport(composition, format);
+  const code = method === 'agent' ? '' : generateExport(input, format);
   const lines = code.split('\n').length;
 
-  useEffect(() => () => clearTimeout(copyTimer.current), []);
+  useEffect(() => () => {
+    clearTimeout(copyTimer.current);
+    if (previewURL.current) URL.revokeObjectURL(previewURL.current);
+  }, []);
   useEffect(() => {
     if (document.querySelector(`link[href="${exampleFonts}"]`)) return;
     const link = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: exampleFonts });
@@ -80,7 +124,10 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
 
   function choose(next: Method) {
     if (next === method) return;
-    studioSounds.play('tick'); setMethod(next); setError(''); setStatus('');
+    studioSounds.play('tick'); setMethod(next); setCopied(null); setError(''); setStatus('');
+  }
+  function setOption<T>(set: (value: T) => void) {
+    return (next: T) => { studioSounds.play('tick'); set(next); setStatus(''); };
   }
   async function copy(value: string, label: string) {
     try {
@@ -95,22 +142,30 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
   async function download() {
     setBusy(true); setError(''); setStatus('Preparing your kit…');
     try {
-      await downloadComposition(composition, format);
+      await downloadComposition(input, format);
       setStatus('Kit downloaded. Its README walks through setup.');
     } catch (reason) {
       setStatus('');
       setError(reason instanceof Error ? reason.message : 'The kit could not be prepared. Please try again.');
     } finally { setBusy(false); }
   }
+  function openPreview() {
+    // One preview page stays available, so its tab can reload until the next preview replaces it.
+    if (previewURL.current) URL.revokeObjectURL(previewURL.current);
+    previewURL.current = URL.createObjectURL(new Blob([createPreviewPage(input, location.href)], { type: 'text/html' }));
+    window.open(previewURL.current, '_blank', 'noopener');
+  }
 
-  function copyRow(label: string, value: string, content: ReactNode, options: { code?: boolean; meta?: string; disabled?: boolean } = {}) {
-    const done = copied === label;
-    return <button type="button" className="copy-row" data-copied={done} disabled={options.disabled}
-      aria-label={`Copy ${label.toLowerCase()}`} title={options.code ? value : undefined} onClick={() => void copy(value, label)}>
-      <span className={`copy-row-text${options.code ? ' is-code' : ''}`}>{content}</span>
-      {options.meta && <span className="copy-row-meta">{options.meta}</span>}
-      <span className="copy-row-icon" aria-hidden="true">{done ? <Check size={14} /> : <Copy size={14} />}</span>
-    </button>;
+  // "Copied" appears on the step's label line, so confirming never changes the row's size.
+  function step(title: string, row: Copyable, extra?: ReactNode) {
+    const done = copied === row.label;
+    return <li><span className="export-step-label">{title}{done && <span className="export-step-copied" aria-hidden="true">Copied</span>}</span>
+      <button type="button" className="copy-row" data-copied={done} disabled={row.disabled}
+        aria-label={`Copy ${row.label.toLowerCase()}`} title={row.code ? row.value : undefined} onClick={() => void copy(row.value, row.label)}>
+        <span className={`copy-row-text${row.code ? ' is-code' : ''}`}>{row.content}</span>
+        {row.meta && <span className="copy-row-meta">{row.meta}</span>}
+        <span className="copy-row-icon" aria-hidden="true">{done ? <Check size={14} /> : <Copy size={14} />}</span>
+      </button>{extra}</li>;
   }
   const preview = <div className="export-preview"><Folder key={method} title="Preview code" defaultOpen={false}>
     <pre className="export-code" tabIndex={0} aria-label={`${method === 'html' ? 'HTML' : 'React'} code`}><code>{code}</code></pre>
@@ -120,21 +175,24 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
 
   return <div className="export-panel">
     <MethodPicker value={method} onChange={choose} />
+    <div className="export-options">
+      <ChoiceRow label="Style" options={appearances} value={appearance} onChange={setOption(setAppearance)} />
+      <ChoiceRow label="Element" options={tags} value={tag} onChange={setOption(setTag)} />
+    </div>
+    <p className="control-hint">{appearance === 'site' ? 'Uses your page’s fonts, colors and size.' : 'Brings the studio’s fonts, colors and size.'} {elementHints[tag]}</p>
+    <button type="button" className="text-button export-sample" onClick={openPreview}>
+      Preview on a sample page<ArrowUpRight size={12} aria-hidden="true" /><span className="visually-hidden"> (opens in a new tab)</span>
+    </button>
     <ol className={`export-steps${method === 'html' ? '' : ' is-numbered'}`}>
       {method === 'agent' && <>
-        <li><span className="export-step-label">Add the Intertext skill to your project</span>
-          {copyRow('Install command', skillCommand, skillCommand, { code: true })}</li>
-        <li><span className="export-step-label">Ask your agent to add this composition</span>
-          {copyRow('Agent prompt', createIntegrationPrompt(composition), 'Agent prompt', { meta: 'with layout data' })}</li>
+        {step('Add the Intertext skill to your project', { label: 'Install command', value: skillCommand, content: skillCommand, code: true })}
+        {step('Ask your agent to add this composition', { label: 'Agent prompt', value: createIntegrationPrompt(input), content: 'Agent prompt', meta: 'with layout data' })}
       </>}
       {method === 'react' && <>
-        <li><span className="export-step-label">Install the package</span>
-          {copyRow('Install command', packageCommand, packageCommand, { code: true })}</li>
-        <li><span className="export-step-label">Add the component</span>
-          {copyRow('Component code', code, 'Headline.tsx', { meta: `${lines} lines`, disabled: hasUploads })}{preview}{uploadHint}</li>
+        {step('Install the package', { label: 'Install command', value: packageCommand, content: packageCommand, code: true })}
+        {step('Add the component', { label: 'Component code', value: code, content: 'Headline.tsx', meta: `${lines} lines`, disabled: hasUploads }, <>{preview}{uploadHint}</>)}
       </>}
-      {method === 'html' && <li><span className="export-step-label">Paste into any page</span>
-        {copyRow('HTML snippet', code, 'HTML snippet', { meta: `${lines} lines`, disabled: hasUploads })}{preview}{uploadHint}</li>}
+      {method === 'html' && step('Paste into any page', { label: 'HTML snippet', value: code, content: 'HTML snippet', meta: `${lines} lines`, disabled: hasUploads }, <>{preview}{uploadHint}</>)}
     </ol>
     <button type="button" className="primary-button full-width export-download" disabled={busy} onClick={() => void download()}>
       <ArrowDownToLine size={14} />{busy ? 'Preparing…' : method === 'agent' ? 'Download kit' : `Download ${method === 'html' ? 'HTML' : 'React'} kit`}<span>ZIP</span>
@@ -146,7 +204,7 @@ export function ExportPanel({ composition }: { composition: ExportComposition })
     <span className="visually-hidden" role="status" aria-live="polite">{status}</span>
 
     <div className="panel-rule" />
-    <span className="field-heading">Starting points</span>
+    <span className="field-heading">Examples</span>
     <div className="example-grid">{examples.map(example =>
       <a key={example.slug} className="example-card" href={`/examples/${example.slug}.html`} target="_blank" rel="noreferrer">
         <span className="example-thumb" style={example.style} aria-hidden="true">

@@ -12,7 +12,7 @@ import ts from 'typescript';
 
 const source = readFileSync(new URL('../src/studio-export.ts', import.meta.url), 'utf8');
 const { outputText } = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
-const { generateExport, createCompositionManifest, createIntegrationPrompt, buildCompositionFiles, buildCompositionArchive, createStoredZip } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+const { generateExport, createCompositionManifest, createIntegrationPrompt, createPreviewPage, buildCompositionFiles, buildCompositionArchive, createStoredZip } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
 const font = { id: 'default', name: 'Helvetica Neue', label: 'Default', family: "'Helvetica Neue', Helvetica, Arial, sans-serif", letterSpacing: '-.058em', mobileLetterSpacing: '-.055em' };
 const makeInput = (overrides = {}) => ({ text: 'Designing text interfaces.', artifacts: [{ id: 'a', position: 1, artifact: { src: '/media/concrete.jpg', alt: 'Concrete', width: '3.3em', height: '.85em', hoverExpand: true } }], font, fontSize: 125, dark: true, ...overrides });
 const content = (files, path) => new TextDecoder().decode(files.find(file => file.path === path)?.bytes);
@@ -178,11 +178,13 @@ test('hover expansion exports focusable media and explicit touch controls withou
   assert.equal(pill.tabIndex, 0);
   assert.equal(pill.hasAttribute('tab-index'), false);
   assert.equal(button.getAttribute('aria-expanded'), 'false');
-  assert.match(button.textContent, /^Expand image:/);
+  assert.equal(button.textContent, 'Expand image');
+  assert.equal(button.getAttribute('aria-label'), 'Expand image: Concrete');
   button.click();
   assert.equal(pill.hasAttribute('expanded'), true);
   assert.equal(button.getAttribute('aria-expanded'), 'true');
-  assert.match(button.textContent, /^Collapse image:/);
+  assert.equal(button.textContent, 'Collapse image');
+  assert.equal(button.getAttribute('aria-label'), 'Collapse image: Concrete');
   button.click();
   assert.equal(pill.hasAttribute('expanded'), false);
   dom.window.close();
@@ -258,15 +260,17 @@ test('generated HTML audio controls play, pause, reflect ended state and announc
   const button = dom.window.document.querySelector('button');
   const pill = dom.window.document.querySelector('artifact-pill');
   assert.equal(pill.hasAttribute('paused'), true, 'audio remains silent on load');
-  assert.match(button.textContent, /^Play audio: A short sound$/);
+  assert.equal(button.textContent, 'Play audio');
+  assert.equal(button.getAttribute('aria-label'), 'Play audio: A short sound');
   button.click(); await settle();
-  assert.match(button.textContent, /^Pause audio:/);
+  assert.equal(button.textContent, 'Pause audio');
+  assert.equal(button.getAttribute('aria-label'), 'Pause audio: A short sound');
   assert.equal(button.getAttribute('aria-pressed'), 'true');
   button.click(); await settle();
-  assert.match(button.textContent, /^Play audio:/);
+  assert.equal(button.textContent, 'Play audio');
   button.click(); await settle();
   pill.finished = true; pill.media.dispatchEvent(new dom.window.Event('ended')); await settle();
-  assert.match(button.textContent, /^Play audio:/);
+  assert.equal(button.textContent, 'Play audio');
   pill.fail = true;
   button.click(); await settle();
   assert.match(dom.window.document.querySelector('[role="status"]').textContent, /Playback could not start/);
@@ -287,7 +291,8 @@ test('React media exports compile with visible controls and versioned download i
     .replace(/import \{ ArtifactPill \} from 'intertext-dev\/react';/, 'const ArtifactPill = () => null;');
   const { default: Headline } = await import(`data:text/javascript;base64,${Buffer.from(runnable).toString('base64')}`);
   const document = new JSDOM(renderToStaticMarkup(React.createElement(Headline))).window.document;
-  assert.equal(document.querySelector('button').textContent, 'Play audio: Music');
+  assert.equal(document.querySelector('button').textContent, 'Play audio');
+  assert.equal(document.querySelector('button').getAttribute('aria-label'), 'Play audio: Music');
 });
 
 test('ZIP output extracts with system unzip and rejects unsafe or duplicate paths', async () => {
@@ -305,4 +310,68 @@ test('ZIP output extracts with system unzip and rejects unsafe or duplicate path
   const bytes = new Uint8Array([1]);
   for (const path of ['../escape', '/absolute', 'a/../escape', 'a\\escape']) assert.throws(() => createStoredZip([{ path, bytes }]), /Invalid/);
   assert.throws(() => createStoredZip([{ path: 'same', bytes }, { path: 'same', bytes }]), /duplicate/);
+});
+
+test('controls show short labels, keep full descriptions in accessible names and number repeated media', () => {
+  const input = makeInput({ artifacts: [
+    { id: 'a', position: 0, artifact: { src: '/media/a.mp4', alt: 'First clip', kind: 'video', hoverExpand: true } },
+    { id: 'b', position: 1, artifact: { src: '/media/b.mp4', alt: 'Second clip', kind: 'video' } },
+    { id: 'c', position: 2, artifact: { src: '/media/c.gif', alt: 'Record', kind: 'gif' } },
+  ] });
+  const buttons = [...new JSDOM(generateExport(input, 'html')).window.document.querySelectorAll('button')];
+  assert.deepEqual(buttons.map(button => button.textContent), ['Play video 1', 'Play video 2', 'Play animation', 'Expand video 1']);
+  assert.deepEqual(buttons.map(button => button.getAttribute('aria-label')), ['Play video 1: First clip', 'Play video 2: Second clip', 'Play animation: Record', 'Expand video 1: First clip']);
+  const react = generateExport(input, 'react');
+  assert.match(react, /"Expand video 1: First clip"/);
+  assert.match(react, /\? "Pause video 2" : "Play video 2"/);
+});
+
+test('site appearance inherits the page typeface, color and size across HTML, React, kits and the agent prompt', async () => {
+  const serif = { ...font, id: 'instrument-serif', name: 'Instrument Serif', family: "'Instrument Serif', Georgia, serif", stylesheetUrl: 'https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap' };
+  const input = makeInput({ appearance: 'site', tag: 'p', font: serif });
+  const html = generateExport(input, 'html');
+  const document = new JSDOM(html).window.document;
+  const paragraph = document.querySelector('p.intertext-heading');
+  assert.ok(paragraph, 'the chosen element is used');
+  assert.equal(paragraph.parentElement.hasAttribute('style'), false);
+  assert.doesNotMatch(html, /font-family|color-scheme|--intertext-scale|@container|fonts\.googleapis|Instrument Serif/);
+  assert.match(html, /--artifact-focus: currentColor/);
+  assert.equal(paragraph.querySelector('artifact-pill').getAttribute('width'), '3.3em');
+  assert.equal(document.querySelector('button').textContent, 'Expand image');
+
+  const react = generateExport(input, 'react');
+  assert.doesNotMatch(react, /CSSProperties|compositionStyle|fonts\.css|Instrument Serif/);
+  const compiled = ts.transpileModule(react, { reportDiagnostics: true, fileName: 'Headline.tsx', compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX } });
+  assert.deepEqual(compiled.diagnostics, []);
+  const runnable = compiled.outputText
+    .replace(/from "react\/jsx-runtime"/g, `from ${JSON.stringify(import.meta.resolve('react/jsx-runtime'))}`)
+    .replace(/from 'react'/g, `from ${JSON.stringify(import.meta.resolve('react'))}`)
+    .replace(/import \{ ArtifactPill \} from 'intertext-dev\/react';/, 'const ArtifactPill = () => null;');
+  const { default: Headline } = await import(`data:text/javascript;base64,${Buffer.from(runnable).toString('base64')}`);
+  const rendered = new JSDOM(renderToStaticMarkup(React.createElement(Headline))).window.document;
+  assert.equal(rendered.querySelector('p.intertext-heading').parentElement.hasAttribute('style'), false);
+
+  const files = await buildCompositionFiles(input, 'html', mockDownloads());
+  assert.equal(files.some(file => file.path.startsWith('fonts/') || file.path === 'fonts.css'), false);
+  assert.match(content(files, 'index.html'), /Sample page styles for this preview/);
+  assert.match(content(files, 'README.md'), /takes its typeface, color and size from your page/);
+  assert.equal(JSON.parse(content(files, 'composition.json')).appearance, 'site');
+  assert.match(createIntegrationPrompt(input), /use the site's own typography and colors/);
+  assert.equal(createCompositionManifest(makeInput()).appearance, 'studio');
+});
+
+test('sample-page preview loads media and the runtime from the studio origin and keeps uploads readable', () => {
+  const input = makeInput({ appearance: 'site', artifacts: [
+    { id: 'a', position: 1, artifact: { src: '/media/concrete.jpg', alt: 'Concrete', hoverExpand: true } },
+    { id: 'b', position: 2, artifact: { src: 'blob:https://preview.test/upload', alt: 'Upload', kind: 'video', poster: '/media/poster.webp' } },
+  ] });
+  const html = createPreviewPage(input, 'https://preview.test/studio');
+  const document = new JSDOM(html).window.document;
+  assert.equal(document.querySelector('script[type="module"]').getAttribute('src'), 'https://preview.test/releases/0.1.0/artifact-pill.js');
+  const pills = [...document.querySelectorAll('artifact-pill')];
+  assert.deepEqual(pills.map(pill => pill.getAttribute('src')), ['https://preview.test/media/concrete.jpg', 'blob:https://preview.test/upload']);
+  assert.equal(pills[1].getAttribute('poster'), 'https://preview.test/media/poster.webp');
+  assert.match(html, /Sample page styles for this preview/);
+  assert.match(document.body.firstElementChild.textContent, /^Sample page preview\. Your site’s own fonts/);
+  assert.match(createPreviewPage(makeInput(), 'https://preview.test/studio'), /The Studio style brings its own fonts/);
 });
