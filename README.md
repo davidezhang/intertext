@@ -6,7 +6,7 @@ A responsive image, GIF, audio waveform, or silent looping video that sits betwe
 
 ## Add it to your website
 
-Start with the [integration guide](https://intertext.dev/docs/integration.md). It includes native HTML, React/Next.js, media handling, and complete [portfolio](https://intertext.dev/examples/portfolio.html), [product](https://intertext.dev/examples/product.html), and [editorial](https://intertext.dev/examples/editorial.html) recipes. Normal website compositions use real headings and paragraphs with static pills; dragging is for editing experiences.
+Start with the [integration guide](https://intertext.dev/docs/integration.md). It includes native HTML, React/Next.js, media handling, and complete [editorial](https://intertext.dev/examples/editorial.html), [portfolio](https://intertext.dev/examples/portfolio.html), [product](https://intertext.dev/examples/product.html), [event](https://intertext.dev/examples/event.html), [studio](https://intertext.dev/examples/studio.html), and [field notes](https://intertext.dev/examples/notes.html) recipes. Normal website compositions use real headings and paragraphs with static pills; dragging is for editing experiences.
 
 Install the Intertext skill from your website project:
 

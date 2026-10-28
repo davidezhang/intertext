@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An Intertext writing starter: a personal journal entry with small images, a GIF and a video set inside its running text.">
+  <title>Field notes — Intertext example</title>
+  <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
+  <style>
+    :root { color-scheme: light; --paper: #fbfaf8; --ink: #262624; --soft: #7a766e; --rule: #e4e1da; color: var(--ink); background: var(--paper); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: inherit; text-decoration-color: #c4c0b7; text-underline-offset: .2em; }
+    a:hover { text-decoration-color: currentColor; }
+    a:focus-visible, button:focus-visible, artifact-pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    artifact-pill { --artifact-background: #e9e6df; --artifact-focus: var(--ink); --artifact-radius: 5px; --artifact-align: -.28em; }
+    .column { width: min(100% - 2.5rem, 38rem); margin-inline: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-block: 1.75rem 0; font-size: .9rem; }
+    .brand { font-weight: 600; text-decoration: none; }
+    header nav { display: flex; gap: 1.25rem; color: var(--soft); }
+    article { padding-block: clamp(3.5rem, 10vw, 6rem) 3rem; }
+    .meta { margin: 0; color: var(--soft); font-size: .9rem; font-variant-numeric: tabular-nums; }
+    h1 { margin: .6rem 0 2.25rem; font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 650; line-height: 1.12; letter-spacing: -.03em; text-wrap: balance; }
+    article p { margin: 0 0 1.4rem; font-size: 1.15rem; line-height: 1.72; }
+    blockquote { margin: 2.25rem 0; padding-left: 1.25rem; border-left: 2px solid var(--ink); font-size: 1.35rem; line-height: 1.5; letter-spacing: -.01em; }
+    .aside { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem 1rem; margin-top: 2.5rem; padding: 1rem 1.1rem; border: 1px solid var(--rule); border-radius: 10px; color: var(--soft); font-size: .92rem; line-height: 1.5; }
+    button { padding: .5rem .9rem; border: 1px solid #cfcbc2; border-radius: 999px; background: #fff; color: var(--ink); font: inherit; cursor: pointer; }
+    button:hover { border-color: var(--ink); }
+    .more { padding-block: 2rem 4rem; border-top: 1px solid var(--rule); }
+    .more h2 { margin: 0 0 1rem; color: var(--soft); font-size: .9rem; font-weight: 400; }
+    .more ul { margin: 0; padding: 0; list-style: none; }
+    .more li { display: flex; justify-content: space-between; gap: 1rem; padding-block: .7rem; border-bottom: 1px solid var(--rule); }
+    .more time { color: var(--soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    footer { padding-block: 1.5rem 2.5rem; color: var(--soft); font-size: .85rem; line-height: 1.6; }
+    @media (max-width: 480px) { article p { font-size: 1.07rem; } header nav { display: none; } }
+  </style>
+</head>
+<body>
+  <header class="column">
+    <a class="brand" href="#entry">Field notes</a>
+    <nav aria-label="Primary"><a href="#more">Archive</a><a href="mailto:notes@example.com">Write back</a></nav>
+  </header>
+  <main class="column">
+    <article id="entry" aria-labelledby="entry-title">
+      <p class="meta"><time datetime="2026-10-24">Saturday, 24 October</time> · 4 min read</p>
+      <h1 id="entry-title">Notes from a slow Saturday</h1>
+      <p>I started the morning at the record shop on Ferry Street, where a turntable <artifact-pill data-motion kind="gif" src="../media/analog-loop.gif" poster="../media/analog-loop.jpg" alt="A vinyl record spinning under a tonearm" width="2.3em" height="1.2em" play-on-hover paused></artifact-pill> had been left spinning in the window long after the song ended. Nobody seemed in a hurry to lift the needle.</p>
+      <p>The station escalators <artifact-pill data-motion kind="video" src="../media/escalator-motion.mp4" poster="../media/escalator-motion.jpg" alt="Escalators rising through a steel and glass hall" width="2.3em" height="1.2em" play-on-hover paused></artifact-pill> were running again after a month of repairs. I rode them twice, once for the view and once because I had missed my stop.</p>
+      <blockquote>Some places are only interesting when you are not trying to get anywhere.</blockquote>
+      <p>On the walk home I passed the old library, its concrete beams <artifact-pill src="../media/concrete.jpg" alt="Angular concrete beams meeting recessed windows" width="1.6em" height="1.2em" position="50% 40%"></artifact-pill> sharp against a flat gray sky, then spent the rest of the afternoon in my favorite chair <artifact-pill src="../media/shell-chair.jpg" alt="A black shell chair casting a soft shadow" width="1.6em" height="1.2em" position="50% 40%"></artifact-pill> with a book I have been not-quite-reading since August.</p>
+      <p>Tomorrow, the same plan. Fewer stops, if I can manage it.</p>
+      <div class="aside" id="motion-note" hidden><span>Hover a moving picture to play it.</span><button id="motion-toggle" type="button" aria-pressed="false">Play all motion</button></div>
+    </article>
+    <section class="more" id="more" aria-labelledby="more-title">
+      <h2 id="more-title">Earlier notes</h2>
+      <ul>
+        <li><a href="#entry">A week of fog</a><time datetime="2026-10-17">17 Oct</time></li>
+        <li><a href="#entry">The bench outside the bakery</a><time datetime="2026-10-10">10 Oct</time></li>
+        <li><a href="#entry">Small rooms, tall windows</a><time datetime="2026-10-03">3 Oct</time></li>
+      </ul>
+    </section>
+  </main>
+  <footer class="column">Intertext field notes starter · Illustrative copy · <a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></footer>
+  <script type="module">
+    await customElements.whenDefined('artifact-pill');
+    const button = document.querySelector('#motion-toggle');
+    const pills = document.querySelectorAll('[data-motion]');
+    document.querySelector('#motion-note').hidden = false;
+    button.addEventListener('click', () => {
+      const playing = button.getAttribute('aria-pressed') !== 'true';
+      // The button replaces hover playback, so keyboard and touch readers can see the motion too.
+      for (const pill of pills) {
+        pill.removeAttribute('play-on-hover');
+        pill.toggleAttribute('paused', !playing);
+        if (playing) pill.play().catch(() => pill.setAttribute('paused', ''));
+        else pill.pause();
+      }
+      button.setAttribute('aria-pressed', String(playing));
+      button.textContent = playing ? 'Pause all motion' : 'Play all motion';
+    });
+  </script>
+</body>
+</html>

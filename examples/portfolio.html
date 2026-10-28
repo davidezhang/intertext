@@ -3,84 +3,98 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A responsive Intertext portfolio introduction with an inline video and semantic heading.">
-  <title>Portfolio introduction — Intertext example</title>
+  <meta name="description" content="An Intertext portfolio starter: a dark, minimal introduction with three hover-expanding pills and an indexed list of work.">
+  <title>Portfolio — Intertext example</title>
   <script type="module" src="../releases/0.1.0/artifact-pill.js"></script>
   <style>
-    :root { color-scheme: dark; font-family: Arial, Helvetica, sans-serif; color: #eeeae2; background: #181917; }
+    :root { color-scheme: dark; --bg: #0d0d0d; --fg: #ececec; --soft: #8c8c8c; --rule: #262626; color: var(--fg); background: var(--bg); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     * { box-sizing: border-box; }
     body { margin: 0; }
-    a { color: inherit; text-underline-offset: .3em; }
-    a:focus-visible, button:focus-visible { outline: 2px solid #d4e1b9; outline-offset: 6px; }
-    header, main, footer { width: min(100% - 3rem, 1240px); margin-inline: auto; }
-    header { display: flex; justify-content: space-between; gap: 1.5rem; padding-block: 2rem; font-size: .8rem; }
-    .brand { text-decoration: none; letter-spacing: .08em; }
-    .intro { padding-block: clamp(4rem, 11vw, 10rem) 5rem; }
-    .eyebrow { color: #a3a99c; font-size: .72rem; letter-spacing: .13em; text-transform: uppercase; }
-    h1 { max-width: 16ch; margin: 1.2rem 0 2rem; font-size: clamp(2.8rem, 7.7vw, 7.5rem); line-height: 1.08; font-weight: 400; letter-spacing: -.055em; }
-    artifact-pill { --artifact-background: #33372f; --artifact-focus: #d4e1b9; }
-    .intro-copy { max-width: 37rem; font-size: clamp(1rem, 1.5vw, 1.2rem); color: #b7bbae; line-height: 1.6; }
-    button { margin-top: 1rem; border: 1px solid #656a5e; border-radius: 999px; color: inherit; background: transparent; padding: .8rem 1.2rem; font: inherit; font-size: .8rem; cursor: pointer; }
-    button:hover { background: #30342a; }
-    #playback-status { min-height: 1.5em; font-size: .8rem; color: #b7bbae; }
-    .work { padding-block: 2rem 5rem; border-top: 1px solid #464a40; }
-    h2 { margin: 0 0 2rem; font-size: .8rem; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; }
-    .work-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
-    .work-list article { border-top: 1px solid #464a40; padding-top: 1.25rem; }
-    .work-list h3 { font-weight: 400; font-size: 1.7rem; margin: 0 0 .5rem; }
-    .work-list p { color: #b7bbae; line-height: 1.5; max-width: 29rem; }
-    footer { padding-block: 1.5rem; border-top: 1px solid #464a40; color: #a3a99c; font-size: .75rem; line-height: 1.7; }
-    @media (max-width: 540px) { header, main, footer { width: calc(100% - 2rem); } .work-list { grid-template-columns: 1fr; gap: 1.5rem; } h1 { font-size: clamp(2.6rem, 10.6vw, 4rem); } }
+    a { color: inherit; text-decoration: none; }
+    a:focus-visible, button:focus-visible, artifact-pill:focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
+    artifact-pill { --artifact-background: #222; --artifact-focus: var(--fg); }
+    .wrap { width: min(100% - 3rem, 1360px); margin-inline: auto; }
+    .small { font-size: .82rem; line-height: 1.5; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding-block: 1.6rem; }
+    header nav { display: flex; gap: 1.75rem; color: var(--soft); }
+    header nav a:hover { color: var(--fg); }
+    .status { display: inline-flex; align-items: center; gap: .55rem; color: var(--soft); }
+    .status::before { content: ''; width: .45rem; height: .45rem; border-radius: 50%; background: #7ce38b; }
+    .intro { padding-block: clamp(5rem, 15vw, 12rem) clamp(4rem, 9vw, 7rem); }
+    h1 { max-width: 15.5ch; margin: 0; font-size: clamp(2.6rem, 6.6vw, 6.9rem); font-weight: 400; line-height: 1.08; letter-spacing: -.055em; }
+    .intro-foot { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.5rem; margin-top: clamp(2.5rem, 6vw, 4.5rem); align-items: start; }
+    .intro-foot p { grid-column: 7 / span 5; margin: 0; max-width: 31rem; color: var(--soft); font-size: 1.05rem; line-height: 1.6; }
+    .controls { grid-column: 1 / span 5; display: flex; align-items: center; gap: 1rem; }
+    button { display: inline-flex; align-items: center; gap: .6rem; padding: .7rem 1.05rem; border: 1px solid #3a3a3a; border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: .82rem; cursor: pointer; }
+    button:hover { background: #1b1b1b; }
+    button span { font-size: .62rem; }
+    .work { padding-block: 2rem 6rem; }
+    .work-head { display: flex; justify-content: space-between; padding-bottom: 1rem; color: var(--soft); border-bottom: 1px solid var(--rule); }
+    h2 { margin: 0; font-size: inherit; font-weight: 400; }
+    .work ol { margin: 0; padding: 0; list-style: none; }
+    .work a { display: grid; grid-template-columns: 3rem minmax(0, 1fr) 12rem 4rem; align-items: center; gap: 1.5rem; padding-block: 1.35rem; border-bottom: 1px solid var(--rule); transition: color .2s; }
+    .work .index, .work .kind, .work .year { color: var(--soft); }
+    .work .year { text-align: right; font-variant-numeric: tabular-nums; }
+    .work h3 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.6rem); font-weight: 400; letter-spacing: -.04em; }
+    .work h3 artifact-pill { --artifact-align: -.06em; margin-left: .2em; }
+    @media (hover: hover) { .work ol:hover a { color: var(--soft); } .work ol a:hover { color: var(--fg); } }
+    .contact { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 2rem; padding-block: 4rem; border-top: 1px solid var(--rule); }
+    .contact a { font-size: clamp(2rem, 5.2vw, 4.75rem); letter-spacing: -.05em; line-height: 1; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .14em; text-decoration-color: #444; }
+    .contact a:hover { text-decoration-color: currentColor; }
+    footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem 2rem; padding-block: 1.5rem 2.5rem; color: var(--soft); border-top: 1px solid var(--rule); }
+    footer a { text-decoration: underline; text-underline-offset: .2em; }
+    @media (max-width: 760px) { .intro-foot { grid-template-columns: 1fr; } .intro-foot p, .controls { grid-column: auto; } .work a { grid-template-columns: 2rem minmax(0, 1fr) auto; } .work .kind { display: none; } header nav { display: none; } }
+    @media (max-width: 480px) { .wrap { width: calc(100% - 2rem); } h1 { font-size: clamp(2.3rem, 11.5vw, 3.6rem); letter-spacing: -.05em; } .work a { gap: 1rem; } }
   </style>
 </head>
 <body>
-  <header>
-    <a class="brand" href="#intro">MIRA / DESIGN</a>
-    <a href="#selected-work">Selected work</a>
+  <header class="wrap small">
+    <a href="#intro">Mira Okafor</a>
+    <nav aria-label="Primary"><a href="#work">Work</a><a href="#contact">Contact</a></nav>
+    <span class="status">Booking from March 2027</span>
   </header>
-  <main>
+  <main class="wrap">
     <section class="intro" id="intro" aria-labelledby="intro-title">
-      <p class="eyebrow">Independent designer · San Francisco</p>
-      <h1 id="intro-title">I make digital <artifact-pill id="portfolio-film" kind="video" src="../media/escalator-motion.mp4" poster="../media/escalator-motion.jpg" alt="An escalator moving through a steel and glass interior" width="2.1em" height=".76em" fit="crop" paused></artifact-pill> experiences feel human.</h1>
-      <p class="intro-copy">Thoughtful interfaces, expressive identities, and small details that make everyday things easier to use. A practice at the intersection of structure and feeling.</p>
-      <button id="video-toggle" type="button" aria-controls="portfolio-film" aria-pressed="false" hidden>Play inline film</button>
-      <p id="playback-status" role="status"></p>
-    </section>
-    <section class="work" id="selected-work" aria-labelledby="work-title">
-      <h2 id="work-title">Selected work / 01—02</h2>
-      <div class="work-list">
-        <article><h3>Common Ground</h3><p>A digital home for a neighborhood studio, built around the people and places that give it character.</p></article>
-        <article><h3>Small Hours</h3><p>An expressive identity and a quieter reading experience for an independent culture journal.</p></article>
+      <h1 id="intro-title">Mira Okafor designs <artifact-pill data-motion kind="video" src="../media/escalator-motion.mp4" poster="../media/escalator-motion.jpg" alt="Escalators rising through a steel and glass hall" width="2.3em" height=".78em" expanded-width="3.6em" expanded-height="1.05em" hover-expand play-on-hover paused tabindex="0"></artifact-pill> interfaces, <artifact-pill src="../media/shell-chair.jpg" alt="A black shell chair casting a soft shadow" width="1.5em" height=".78em" expanded-width="2.4em" expanded-height="1.05em" position="50% 40%" hover-expand tabindex="0"></artifact-pill> objects and <artifact-pill data-motion kind="gif" src="../media/analog-loop.gif" poster="../media/analog-loop.jpg" alt="A vinyl record spinning under a tonearm" width="2em" height=".78em" expanded-width="3.2em" expanded-height="1.05em" hover-expand play-on-hover paused tabindex="0"></artifact-pill> small sounds for independent studios.</h1>
+      <div class="intro-foot">
+        <div class="controls"><button id="motion-toggle" type="button" aria-pressed="false" hidden><span aria-hidden="true">▶</span> Play motion</button></div>
+        <p>Twelve years of product, furniture and sound work for teams who prefer a few careful things to many loud ones. Currently in Lisbon.</p>
       </div>
     </section>
+    <section class="work" id="work" aria-labelledby="work-title">
+      <div class="work-head small"><h2 id="work-title">Selected work</h2><span>2022—2026</span></div>
+      <ol class="small">
+        <li><a href="#work"><span class="index">01</span><h3>Common Ground <artifact-pill src="../media/concrete.jpg" alt="" width="1.4em" height=".72em"></artifact-pill></h3><span class="kind">Identity, website</span><span class="year">2026</span></a></li>
+        <li><a href="#work"><span class="index">02</span><h3>Shell Archive <artifact-pill src="../media/shell-chair.jpg" alt="" width="1.4em" height=".72em" position="50% 40%"></artifact-pill></h3><span class="kind">Furniture, exhibition</span><span class="year">2025</span></a></li>
+        <li><a href="#work"><span class="index">03</span><h3>Small Hours <artifact-pill src="../media/analog-loop.jpg" alt="" width="1.4em" height=".72em"></artifact-pill></h3><span class="kind">Sound identity</span><span class="year">2024</span></a></li>
+        <li><a href="#work"><span class="index">04</span><h3>Transit <artifact-pill src="../media/escalator-motion.jpg" alt="" width="1.4em" height=".72em"></artifact-pill></h3><span class="kind">Wayfinding app</span><span class="year">2022</span></a></li>
+      </ol>
+    </section>
+    <section class="contact" id="contact" aria-label="Contact">
+      <a href="mailto:hello@example.com">hello@example.com</a>
+      <span class="small" style="color: var(--soft)">Lisbon · Remote</span>
+    </section>
   </main>
-  <footer>Intertext portfolio starter · Illustrative copy. <a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></footer>
+  <footer class="wrap small">
+    <span>Intertext portfolio starter · Illustrative copy</span>
+    <span><a href="../">Customize in Intertext</a> · <a href="../media/LICENSE.md">Demo media credits</a></span>
+  </footer>
   <script type="module">
     await customElements.whenDefined('artifact-pill');
-    const pill = document.querySelector('#portfolio-film');
-    const button = document.querySelector('#video-toggle');
-    const status = document.querySelector('#playback-status');
+    const button = document.querySelector('#motion-toggle');
+    const pills = document.querySelectorAll('[data-motion]');
     button.hidden = false;
-    button.addEventListener('click', async () => {
-      const playing = button.getAttribute('aria-pressed') === 'true';
-      status.textContent = '';
-      if (playing) {
-        pill.pause();
-        pill.setAttribute('paused', '');
-        button.setAttribute('aria-pressed', 'false');
-        button.textContent = 'Play inline film';
-        return;
+    button.addEventListener('click', () => {
+      const playing = button.getAttribute('aria-pressed') !== 'true';
+      // A visible control replaces hover playback, so keyboard and touch visitors can watch too.
+      for (const pill of pills) {
+        pill.removeAttribute('play-on-hover');
+        pill.toggleAttribute('paused', !playing);
+        if (playing) pill.play().catch(() => pill.setAttribute('paused', ''));
+        else pill.pause();
       }
-      button.disabled = true;
-      try {
-        pill.removeAttribute('paused');
-        await pill.play();
-        button.setAttribute('aria-pressed', 'true');
-        button.textContent = 'Pause inline film';
-      } catch {
-        pill.setAttribute('paused', '');
-        status.textContent = 'The film could not play. Its still image remains available.';
-      } finally { button.disabled = false; }
+      button.setAttribute('aria-pressed', String(playing));
+      button.innerHTML = `<span aria-hidden="true">${playing ? '❚❚' : '▶'}</span> ${playing ? 'Pause' : 'Play'} motion`;
     });
   </script>
 </body>

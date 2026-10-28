@@ -26,7 +26,7 @@ Initial scope:
 
 Each composition should include React/TypeScript source, responsive styles, a small set of motion presets, integration instructions, and reduced-motion behavior. Use original media or placeholders that customers replace. The existing stock demo assets are not the paid product.
 
-The free portfolio, editorial, and product examples remain free. A paid pack must add substantial new compositions and variants: complete sections, coordinated typography, responsive layouts, art direction, and useful integration guidance. Do not repackage the current three starter examples as the paid offering.
+The starter examples (editorial, portfolio, product, event, studio, and field notes) remain free. A paid pack must add substantial new compositions and variants: complete sections, coordinated typography, responsive layouts, art direction, and useful integration guidance. Do not repackage the current starter examples as the paid offering.
 
 The value is the finished composition and the time it saves: typography, spacing, responsive behavior, and motion already work together. Complete and validate the pack before setting a price or accepting payment.
 
