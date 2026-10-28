@@ -1,10 +1,13 @@
 import type { CSSProperties } from 'react';
+import type { TransitionConfig } from 'dialkit';
 import type { ArtifactPillProps, InlineArtifactItem } from './lib/react';
 import type { StudioFont } from './studio-fonts';
 
+/** The transition is the studio's editable source for the exported duration and easing. */
+export type ExportArtifact = InlineArtifactItem & { transition?: TransitionConfig };
 export type ExportComposition = {
   text: string;
-  artifacts: InlineArtifactItem[];
+  artifacts: ExportArtifact[];
   font: StudioFont;
   fontSize: number;
   dark: boolean;
@@ -15,7 +18,7 @@ export type ExportComposition = {
 export type ExportFormat = 'react' | 'html';
 export const EXPORT_VERSION = '0.1.1';
 const PACKAGE_NAME = 'intertext-dev';
-const SITE = 'https://intertext.dev';
+export const SITE = 'https://intertext.dev';
 const RELEASE = `/releases/${EXPORT_VERSION}`;
 const PACKAGE_FILE = `${PACKAGE_NAME}-${EXPORT_VERSION}.tgz`;
 const mediaKeys = ['src', 'poster'] as const;
@@ -247,7 +250,7 @@ export function createCompositionManifest(input: ExportComposition) {
     schemaVersion: 1, generator: 'Intertext', version: EXPORT_VERSION,
     package: `${PACKAGE_NAME}@${EXPORT_VERSION}`, packageURL: `${SITE}${RELEASE}/${PACKAGE_FILE}`, tag: safeTag(input), text: input.text,
     typography: { font: { ...input.font }, scale: input.fontSize }, theme: input.dark ? 'dark' : 'light', appearance: input.appearance === 'site' ? 'site' : 'studio',
-    artifacts: prepared.input.artifacts.map(({ id, position, artifact }) => ({ id, position, artifact })),
+    artifacts: prepared.input.artifacts.map(({ id, position, artifact, transition }) => ({ id, position, artifact, ...(transition ? { transition } : {}) })),
     media: input.artifacts.flatMap((item, index) => mediaKeys.filter(key => item.artifact[key]).map(key => ({
       artifactId: item.id, property: key,
       source: item.artifact[key]!.startsWith('blob:') ? 'browser-upload' : publicURL(item.artifact[key]!),
@@ -384,7 +387,7 @@ export async function buildCompositionFiles(input: ExportComposition, format: Ex
   const steps = format === 'html'
     ? `Serve this folder with any static web server (for example, \`npx serve .\`) and open index.html. Module scripts need an HTTP server. To integrate into an existing page, copy the generated composition, artifact-pill.js and media/ directory; adjust relative paths to match your site.${bundledFont ? ' Also copy fonts.css and the fonts/ directory beside your HTML file, retaining the stylesheet link. If you move these files, update the stylesheet link and its font URLs.' : ''}`
     : `From your existing React project, run \`npm install /path/to/this-folder/${PACKAGE_FILE}\`. Copy Headline.tsx into your components folder, copy public/media/ into your project\'s public/media/, and render <Headline />. For additional compositions, give each TSX file and its exported component a unique name (for example, ProductHeadline.tsx and ProductHeadline) so the next download does not replace an earlier composition. Media files use content hashes and can safely share public/media/. React 18+ and React DOM are peer dependencies. Next.js App Router can import the generated client component from a server page. Adjust /media/ URLs if your app uses a base path. ${bundledFont ? 'Copy fonts.css and fonts/ alongside Headline.tsx. If your framework restricts global CSS imports, move the fonts.css import into its global stylesheet entry.' : ''}`;
-  addText('README.md', `# Your Intertext composition\n\n${steps}\n\nThe ${safeTag(input)} element contains the original text. If your page already has a primary heading, choose H2 or Paragraph in the studio's Export settings, or change the tag. ${site ? "It takes its typeface, color and size from your page, and the pills are sized in em, so they follow your type. index.html adds sample page styles for previewing only." : 'The wrapper owns its color, background, typeface and responsive container; remove or adapt these styles when integrating with your design system.'}\n\n${bundledFont ? 'Instrument Serif is included locally with its SIL Open Font License.\n\n' : ''}Uploaded and studio sample media are included without conversion. Media URLs in composition.json map to the generated files. External URLs ${external.length ? `remain external and were not downloaded:\n${[...new Set(external)].map(url => `- ${url}`).join('\n')}` : 'were not needed for this composition.'}\n\nThe runtime is included locally; package registry access is not needed to use this download. This is a display composition: studio editing and dragging are omitted. Hover effects, loops and reduced-motion handling remain in the runtime. On touch screens, tap a hover-expanding pill to toggle its size; keyboard users can press Enter.${bundled.artifacts.some(item => item.artifact.loop) ? ' The Pause animation button stops looping pills.' : ''} Audio is silent on load. Visible keyboard and touch controls are included for audio, video and GIFs; pressing them switches from hover playback to manual playback.\n\nKeep LICENSE with the runtime and read MEDIA-CREDITS.md for sample media licensing. Your uploaded media remains yours; this download does not change its license.\n`);
+  addText('README.md', `# Your Intertext composition\n\n${steps}\n\nThe ${safeTag(input)} element contains the original text. If your page already has a primary heading, choose H2 or Paragraph in the studio's Export settings, or change the tag. ${site ? "It takes its typeface, color and size from your page, and the pills are sized in em, so they follow your type. index.html adds sample page styles for previewing only." : 'The wrapper owns its color, background, typeface and responsive container; remove or adapt these styles when integrating with your design system.'}\n\n${bundledFont ? 'Instrument Serif is included locally with its SIL Open Font License.\n\n' : ''}Uploaded and studio sample media are included without conversion. Media URLs in composition.json map to the generated files. External URLs ${external.length ? `remain external and were not downloaded:\n${[...new Set(external)].map(url => `- ${url}`).join('\n')}` : 'were not needed for this composition.'}\n\nThe runtime is included locally; package registry access is not needed to use this download. This is a display composition: studio editing and dragging are omitted. Hover effects, loops and reduced-motion handling remain in the runtime. On touch screens, tap a hover-expanding pill to toggle its size; keyboard users can press Enter.${bundled.artifacts.some(item => item.artifact.loop) ? ' The Pause animation button stops looping pills.' : ''} Audio is silent on load. Visible keyboard and touch controls are included for audio, video and GIFs; pressing them switches from hover playback to manual playback.\n\nTo revise this composition, open the Intertext studio, choose Global settings → Export → Open composition, and select composition.json. Studio samples and external media return automatically; upload your own files again from ${format === 'react' ? 'public/media/' : 'media/'}.\n\nKeep LICENSE with the runtime and read MEDIA-CREDITS.md for sample media licensing. Your uploaded media remains yours; this download does not change its license.\n`);
   return files;
 }
 

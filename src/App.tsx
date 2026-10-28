@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, X, Trash2, Code2, Image as ImageIcon, Link2, Monitor, Play, Plus, RotateCcw, Smartphone, Sparkles, Type, RectangleHorizontal } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, X, Trash2, Code2, FilePlus2, Image as ImageIcon, Link2, Monitor, Play, Plus, RotateCcw, Smartphone, Sparkles, Type, RectangleHorizontal } from 'lucide-react';
 import { ArtifactPill, InlineArtifactsText } from './lib/react';
 import type { MediaKind } from './lib/artifact-pill';
 import { Slider, Toggle, Folder } from 'dialkit';
@@ -7,7 +7,8 @@ import { DialTransition } from './DialTransition';
 import { DialFontPicker } from './DialFontPicker';
 import { studioFonts } from './studio-fonts';
 import { compileTransition } from './studio-motion';
-import { artifactProps, createPill, defaultText, randomPosition, samples, type Media, type PillConfig } from './studio-model';
+import { artifactProps, createPill, exportArtifacts, isMediaMissing, randomPosition, samples, type Media, type PillConfig } from './studio-model';
+import { loadComposition, missingMediaNote, nextPillNumber, saveComposition, serializeComposition, starterComposition, type StudioComposition } from './studio-persistence';
 import { studioSounds } from './studio-sound';
 import { ExportPanel } from './ExportPanel';
 
@@ -40,7 +41,8 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
   onAnimate: () => void; reducedMotion: boolean; wordCount: number;
 }) {
   const { media, width, height, radius, fit, focalX, focalY, hover, loop, paused } = pill;
-  const [panel, setPanel] = useState<Panel>('shape');
+  const missing = isMediaMissing(media);
+  const [panel, setPanel] = useState<Panel>(missing ? 'media' : 'shape');
   const [urlOpen, setUrlOpen] = useState(false);
   const [url, setUrl] = useState('');
   const [urlKind, setUrlKind] = useState<MediaKind>('image');
@@ -66,14 +68,14 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
   return <>
     <div className="pill-placement"><div className="position-control"><span>Position</span><div><button className="icon-button" aria-label="Move pill left" disabled={pill.position === 0} onClick={() => onChange({ position: pill.position - 1 })}><ArrowLeft size={15} /></button><span>{pill.position + 1} / {wordCount + 1}</span><button className="icon-button" aria-label="Move pill right" disabled={pill.position >= wordCount} onClick={() => onChange({ position: pill.position + 1 })}><ArrowRight size={15} /></button></div></div></div>
         <ControlSection name="media" title="Media" icon={<ImageIcon size={15} />} open={panel === 'media'} onToggle={() => togglePanel('media')}>
-
+            {missing && <p className="error-text media-missing">Media missing. Upload “{media.name}” again.</p>}
             <div className="media-grid">{samples.map(item => <button key={item.id} className={`media-card ${media.id === item.id ? 'selected' : ''}`} aria-pressed={media.id === item.id} onClick={() => { setMedia(item); setError(''); }}><div className="media-thumbnail"><>{item.kind === 'audio' ? <ArtifactPill src={item.src} kind="audio" alt="" paused width="100%" height="100%" radius="0px" /> : <img src={item.poster || item.src} alt="" />}</><span className="media-type">{item.kind.toUpperCase()}</span>{media.id === item.id && <span className="selected-mark"><Check size={12} /></span>}</div><span className="media-name">{item.name}</span></button>)}</div>
-            <div className="media-actions"><button className="primary-button" onClick={onUpload}><Plus size={15} /> Upload media</button><button className="text-button" onClick={() => setUrlOpen(!urlOpen)}><Link2 size={13} /> From URL</button></div>
+            <div className="media-actions"><button className="primary-button" onClick={onUpload}><Plus size={15} /> {missing ? 'Upload again' : 'Upload media'}</button><button className="text-button" onClick={() => setUrlOpen(!urlOpen)}><Link2 size={13} /> From URL</button></div>
             {media.id === 'upload' && <p className="uploaded-file">{media.name}</p>}
             {urlOpen && <form className="url-form" onSubmit={loadUrl}><input aria-label="Media URL" type="url" required placeholder="https://site.com/media.jpg" value={url} onChange={e => setUrl(e.target.value)} /><select aria-label="URL media type" value={urlKind} onChange={e => setUrlKind(e.target.value as MediaKind)}><option value="image">Image</option><option value="gif">GIF</option><option value="video">Video</option><option value="audio">Audio</option></select><button className="primary-button" type="submit">Add <ArrowRight size={13} /></button></form>}
             <div className="media-fields">
             <label className="alt-field">Media description<input aria-label="Media description" value={media.alt} onChange={e => onChange({ media: { ...media, alt: e.target.value } })} /></label>
-            {media.kind !== 'image' && <div className="dial-stack">
+            {media.kind !== 'image' && !missing && <div className="dial-stack">
               <Toggle label={`Play ${media.kind === 'gif' ? 'GIF' : media.kind}`} checked={!paused} onChange={v => setPaused(!v)} />
               <Toggle label="Play on hover" checked={pill.playOnHover} onChange={playOnHover => onChange({ playOnHover, paused: true })} />
             </div>}
@@ -119,38 +121,37 @@ function PillSettings({ pill, onChange, onUpload, onAnimate, reducedMotion, word
 }
 
 export default function App() {
-  const [pills, setPills] = useState<PillConfig[]>(() => {
-    const pill = createPill('pill-1', 1, 1);
-    return [{
-      ...pill,
-      media: { ...(samples.find(sample => sample.kind === 'video') ?? pill.media) },
-      hover: true,
-      expandedHeight: pill.height,
-    }];
-  });
+  const [initial] = useState(() => loadComposition() ?? starterComposition());
+  const [pills, setPills] = useState<PillConfig[]>(initial.pills);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [inspector, setInspector] = useState<'global' | 'pill' | null>(null);
   const [globalPanel, setGlobalPanel] = useState<Panel>('text');
-  const [text, setText] = useState(defaultText);
-  const [fontSize, setFontSize] = useState(100);
-  const [font, setFont] = useState(studioFonts[0]);
-  const [dark, setDark] = useState(true);
-  const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
+  const [text, setText] = useState(initial.text);
+  const [fontSize, setFontSize] = useState(initial.fontSize);
+  const [font, setFont] = useState(initial.font);
+  const [dark, setDark] = useState(initial.dark);
+  const [viewport, setViewport] = useState<'desktop' | 'mobile'>(initial.viewport ?? 'desktop');
   const [reducedMotion, setReducedMotion] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(studioSounds.enabled);
+  const [autosave, setAutosave] = useState(true);
+  const [confirmStart, setConfirmStart] = useState(false);
   const [error, setError] = useState('');
   const [announcement, setAnnouncement] = useState('');
   const [revealId, setRevealId] = useState<string | null>(null);
-  const nextPill = useRef(2);
+  const nextPill = useRef(nextPillNumber(initial.pills));
   const upload = useRef<HTMLInputElement>(null);
   const uploadTarget = useRef<string | null>(null);
   const composition = useRef<HTMLDivElement>(null);
+  const startOverButton = useRef<HTMLButtonElement>(null);
   const previewTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const uploadUrls = useRef(new Set<string>());
+  const unsaved = useRef<string | null>(null);
   const wordCount = (text.match(/\S+/gu) || []).length;
   const selected = pills.find(pill => pill.id === selectedId);
   const artifacts = pills.map(pill => ({ id: pill.id, position: pill.position, artifact: artifactProps(pill, dark, reducedMotion) }));
-  const exportComposition = { text, artifacts: pills.map(pill => ({ id: pill.id, position: pill.position, artifact: artifactProps(pill, dark, false) })), font, fontSize, dark };
+  const exportComposition = { text, artifacts: exportArtifacts(pills, dark), font, fontSize, dark };
+  const missingMedia = pills.filter(pill => isMediaMissing(pill.media)).map(pill => pill.name);
+  const snapshot = serializeComposition({ text, pills, font, fontSize, dark, viewport });
 
   function updatePill(id: string, patch: Partial<PillConfig>) {
     setPills(current => current.map(pill => pill.id === id ? { ...pill, ...patch } : pill));
@@ -175,6 +176,29 @@ export default function App() {
     document.addEventListener('visibilitychange', stopWhenHidden);
     return () => { document.removeEventListener('visibilitychange', stopWhenHidden); studioSounds.dispose(); };
   }, []);
+
+  function flushSave() {
+    if (unsaved.current === null) return;
+    setAutosave(saveComposition(unsaved.current));
+    unsaved.current = null;
+  }
+  useEffect(() => {
+    unsaved.current = snapshot;
+    const timer = setTimeout(flushSave, 500);
+    return () => clearTimeout(timer);
+  }, [snapshot]);
+  useEffect(() => {
+    // Reloading or leaving within the debounce still keeps the latest edit.
+    const flushWhenHidden = () => { if (document.hidden) flushSave(); };
+    window.addEventListener('pagehide', flushSave);
+    document.addEventListener('visibilitychange', flushWhenHidden);
+    return () => { window.removeEventListener('pagehide', flushSave); document.removeEventListener('visibilitychange', flushWhenHidden); };
+  }, []);
+  useEffect(() => {
+    const note = missingMediaNote(initial.pills);
+    if (note) setAnnouncement(`Restored your composition. ${note}`);
+  }, [initial]);
+  useEffect(() => { if (inspector !== 'global') setConfirmStart(false); }, [inspector]);
 
   useEffect(() => {
     const query = matchMedia('(prefers-reduced-motion: reduce)');
@@ -231,14 +255,29 @@ export default function App() {
     const count = (value.match(/\S+/gu) || []).length;
     setPills(current => current.map(pill => ({ ...pill, position: Math.min(positions?.[pill.id] ?? pill.position, count) })));
   }
-  function resetGlobal() { updateText(defaultText); setFontSize(100); setFont(studioFonts[0]); setDark(true); setViewport('desktop'); }
+  // Settings only. The text and pills are the composition, which Start over replaces.
+  function resetGlobal() { setFontSize(100); setFont(studioFonts[0]); setDark(true); setViewport('desktop'); }
+  function applyComposition(next: StudioComposition) {
+    previewTimers.current.forEach(clearTimeout); previewTimers.current.clear();
+    setText(next.text); setPills(next.pills); setFont(next.font); setFontSize(next.fontSize); setDark(next.dark);
+    if (next.viewport) setViewport(next.viewport);
+    nextPill.current = nextPillNumber(next.pills); setSelectedId(null); setError('');
+  }
+  function startOver() {
+    applyComposition(starterComposition()); setConfirmStart(false);
+    setAnnouncement('Started over with the starter composition.'); startOverButton.current?.focus();
+  }
   function uploadFile(file?: File) {
     const id = uploadTarget.current;
     if (!file || !id) return;
     if (!/^image\/(jpeg|png|gif|webp|avif)$|^video\/(mp4|webm|quicktime)$|^audio\/(mpeg|mp3|mp4|x-m4a|aac|wav|wave|x-wav|ogg|webm|flac|x-flac)$/.test(file.type)) { setError('Choose a JPG, PNG, GIF, WebP, AVIF, MP4, WebM, MOV, MP3, WAV, M4A, AAC, OGG, or FLAC file.'); return; }
-    if (!pills.some(pill => pill.id === id)) return;
-    const media: Media = { id: 'upload', name: file.name, kind: file.type === 'image/gif' ? 'gif' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'image', src: URL.createObjectURL(file), alt: file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ') };
-    updatePill(id, { media, paused: media.kind === 'audio', playOnHover: false }); setError('');
+    const target = pills.find(pill => pill.id === id);
+    if (!target) return;
+    const kind: MediaKind = file.type === 'image/gif' ? 'gif' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'image';
+    // The same kind of file restores a missing pill, keeping its description and playback settings.
+    const restoring = isMediaMissing(target.media) && target.media.kind === kind;
+    const media: Media = { id: 'upload', name: file.name, kind, src: URL.createObjectURL(file), alt: restoring && target.media.alt ? target.media.alt : file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ') };
+    updatePill(id, restoring ? { media } : { media, paused: kind === 'audio', playOnHover: false }); setError('');
   }
 
   return <div className={`studio ${dark ? 'theme-dark' : 'theme-light'}`} onClickCapture={controlSound}
@@ -273,7 +312,7 @@ export default function App() {
             <div className="segmented" role="group" aria-label="Preview width"><button aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')}><Monitor size={13} /> Fluid</button><button aria-pressed={viewport === 'mobile'} onClick={() => setViewport('mobile')}><Smartphone size={13} /> 375 px</button></div>
           </ControlSection>
           <ControlSection name="export" title="Export" icon={<Code2 size={15} />} open={globalPanel === 'export'} onToggle={() => toggleGlobal('export')}>
-            <ExportPanel composition={exportComposition} />
+            <ExportPanel composition={exportComposition} missingMedia={missingMedia} autosave={autosave} onOpen={applyComposition} />
           </ControlSection>
           <div className="sound-preference" data-ui-sound="none"><Toggle label="UI sounds" checked={soundEnabled} onChange={setSoundsEnabled} /></div>
         </> : selected && <PillSettings key={selected.id} pill={selected} wordCount={wordCount} reducedMotion={reducedMotion}
@@ -282,7 +321,13 @@ export default function App() {
         {error && inspector === 'pill' && <p className="error-text sidebar-error" role="alert">{error}</p>}
       </div>
       <footer className="sidebar-footer">{inspector === 'global'
-        ? <><button className="text-button" onClick={resetGlobal}><RotateCcw size={13} /> Reset global settings</button>
+        ? <><div className="footer-actions"><button className="text-button" onClick={resetGlobal}><RotateCcw size={13} /> Reset global settings</button>
+            <button ref={startOverButton} className="text-button" aria-expanded={confirmStart} aria-controls="start-over" onClick={() => setConfirmStart(!confirmStart)}><FilePlus2 size={13} /> Start over</button></div>
+          {confirmStart && <div id="start-over" className="start-over" role="group" aria-label="Start over">
+            <p className="control-hint">Clear the text, pills and settings? Download a kit first to keep a copy.</p>
+            <div className="footer-actions"><button className="text-button" onClick={() => { setConfirmStart(false); startOverButton.current?.focus(); }}>Cancel</button>
+              <button className="primary-button" data-ui-sound="thump" onClick={startOver}>Start over</button></div>
+          </div>}
           <div className="creator-credit">by <a href="https://www.davidezhang.com/" target="_blank" rel="noopener noreferrer">Davide Zhang</a></div></>
         : selected && <button className="text-button" onClick={() => removePill(selected.id)}><Trash2 size={13} /> Remove pill</button>}
       </footer>
