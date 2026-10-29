@@ -6,14 +6,14 @@ Intertext adds images, GIFs, silent video, and audio waveforms between words. A 
 
 **intertext-dev 0.1.1** is available on [npm](https://www.npmjs.com/package/intertext-dev) and as a versioned website download. Use the skill with a coding agent, import the browser module in HTML, or install the package in a React project. You do not need an account to install or use Intertext.
 
-The skill is discovered from the website’s `/.well-known/agent-skills/` endpoint. Installing it gives an agent integration instructions; it does not add the runtime to your site automatically.
+The skill installs from the [GitHub repository](https://github.com/davidezhang/intertext). The website’s `/.well-known/agent-skills/` endpoint serves the same skill, with `npx skills add https://intertext.dev`. Installing it gives an agent integration instructions; it does not add the runtime to your site automatically.
 
 ## Let an agent integrate it
 
 Run from your website project:
 
 ```sh
-npx skills add https://intertext.dev
+npx skills add davidezhang/intertext
 ```
 
 Then ask:
