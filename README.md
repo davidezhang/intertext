@@ -11,10 +11,10 @@ Start with the [integration guide](https://intertext.dev/docs/integration.md). I
 Install the Intertext skill from your website project:
 
 ```sh
-npx skills add https://intertext.dev
+npx skills add davidezhang/intertext
 ```
 
-Then ask your agent to add Intertext inline media to your existing page. The skill handles integration guidance; the website uses the component below. See the [hosted skill instructions](https://intertext.dev/.well-known/agent-skills/intertext/SKILL.md). No repository access is required.
+Then ask your agent to add Intertext inline media to your existing page. The skill handles integration guidance; the website uses the component below. The website serves the same skill too, with `npx skills add https://intertext.dev`; see the [hosted skill instructions](https://intertext.dev/.well-known/agent-skills/intertext/SKILL.md).
 
 **Distribution:** [intertext-dev](https://www.npmjs.com/package/intertext-dev) is available on npm. The website also provides the same `0.1.1` package through an immutable versioned download.
 

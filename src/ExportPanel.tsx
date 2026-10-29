@@ -18,7 +18,7 @@ const elementHints: Record<Tag, string> = {
   h1: 'Use H1 once, for the page’s main headline.', h2: 'H2 suits a section heading.', p: 'Paragraph suits body text.',
 };
 type Copyable = { label: string; value: string; content: ReactNode; code?: boolean; meta?: string; disabled?: boolean };
-const skillCommand = 'npx skills add https://intertext.dev';
+const skillCommand = 'npx skills add davidezhang/intertext';
 const packageCommand = 'npm install intertext-dev';
 // Thumbnails echo each starter's own typeface, palette and pill shape.
 const exampleFonts = 'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap';
